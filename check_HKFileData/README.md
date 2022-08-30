@@ -22,9 +22,9 @@
 
 [ Useage ]
 
-    python3 checkHKFileData.py -f {파일상대경로}        # 모든 데이터 출력
+    $ python3 checkHKFileData.py -f {파일상대경로}        # 모든 데이터 출력
 
-    python3 checkHKFileData.py -f {파일상대경로} -o     # 더미 데이터와 일치하지 않는 경우만 콘솔 출력
+    $ python3 checkHKFileData.py -f {파일상대경로} -o     # 더미 데이터와 일치하지 않는 경우만 콘솔 출력
 
 [ ScreenShot ]
 
