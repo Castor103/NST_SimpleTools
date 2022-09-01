@@ -12,7 +12,7 @@ import argparse
 import numpy as np
 
 # Observer HK File Header Size !
-file_header_size = 140  # 140 = 0x8C
+file_header_size = 0  # 140 = 0x8C
 
 print_bar_indent = '------------------------------'
 print_cap_indent = '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
@@ -26,6 +26,7 @@ class ValueType(enum.Enum):
     FLOAT = 3
 
 # ref : https://discuss.dizzycoding.com/reading-struct-in-python-from-created-struct-in-c/
+# ref : https://sosomemo.tistory.com/59
 
 # H1 은 수집하고 뿌려야되서 HK->fsw->tables->hk_cpy_tbl.c 참조
 # 나머지는 각 app의 fsw->platform_inc->cs_msg.h 참조
@@ -40,6 +41,34 @@ TestPack_t =  np.dtype([
     # uint8                           spare               : 5;
    
 ])
+
+CFE_FS_Header_t =  np.dtype([
+    ("ContentType"              , np.uint32   ,       ),    # /**< \brief Identifies the content type (='cFE1'=0x63464531)*/
+    ("SubType"                  , np.uint32   ,       ),
+    ("Length"                   , np.uint32   ,       ),
+    ("SpacecraftID"             , np.uint32   ,       ),
+    ("ProcessorID"              , np.uint32   ,       ),
+    ("ApplicationID"            , np.uint32   ,       ),
+    ("TimeSeconds"              , np.uint32   ,       ),
+    ("TimeSubSeconds"           , np.uint32   ,       ),
+    ("Description"              , np.uint8   , (32,)    ),
+])
+
+DS_FileHeader_t =  np.dtype([
+    ("CloseSeconds"             , np.uint32   ,       ),
+    ("CloseSubsecs"             , np.uint32   ,       ),
+    ("FileTableIndex"           , np.uint16   ,       ),
+    ("FileNameType"             , np.uint16   ,       ),
+    # ("FileName"                 , np.uint8   , (64,)    ),
+])
+
+HKFILE_HEADER =  np.dtype([
+    ("CFE_FS_Header_t"          , np.dtype(CFE_FS_Header_t) ,   ),
+    ("DS_FileHeader_t"          , np.dtype(DS_FileHeader_t) ,   ),
+    
+])
+
+#######################################################################################
 
 EPS_FSW_HKPack_t =  np.dtype([
     ("soh"                          , np.uint8   ,       ),
@@ -77,30 +106,33 @@ EPS_SP_HKPack_t =  np.dtype([
 
 EPS_P60_HKPack_t =  np.dtype([
     ("soh"                          , np.uint8   , (8,)      ),
-#      uint32                          dockDeviceStatus    : 12; 8 4~
+#     uint32                          dockDeviceStatus    : 12; 8 4~
 #     uint32                          acuDeviceStatus     : 14; ~4 8 2~
 #     uint32                          heaterStatus        :  2;
 #     uint32                          spare1              :  4;
 
 #     uint8                           pduDeviceStatus     :  8;
-# // --------------------------------------------------------------
-#     uint16                          powerSwitchStatus   : 10; 8 2~
-#     uint16                          antennaXPHeater     :  2; 
-#     uint16                          antennaXMHeater     :  2;
-#     uint16                          eoc_Heater          :  2;
-
-#     uint8                           xbandSwitchStatus   :  2;
-#     uint8                           pdhsSwitchStatus    :  2;
-#     uint8                           polcubeSwitchStatus :  2;
-#     uint8                           spare2              :  2;
     
+    # 2022.09.01 --------------------------------------------------------------
+    # uint16_t                        powerSwitchStatus         :   7;
+    # uint16_t                        xbandSwitchStatus         :   2;
+    # uint16_t                        pdhsSwitchStatus          :   2;
+    # uint16_t                        polcubeSwitchStatus       :   2;
+    # uint16_t                        spare6                    :   3;
+    
+    # uint8_t                         antXPHeaterSwitchStatus   :   2;
+    # uint8_t                         antXMHeaterSwitchStatus   :   2;
+    # uint8_t                         eocHeaterSwitchStatus     :   2;
+    # uint8_t                         spare7                    :   2;
+    
+
+
     ("SwitchCurrent"                , np.int16    , (7,)      ),
     ("SwitchVoltage"                , np.uint16   , (7,)      ),
     ("SwitchlatchupCount"           , np.uint16   , (7,)      ),
     ("docklatchupCount"             , np.uint16   , (4,)      ),
-    
-    ("acuCurrent"                   , np.int16    , (6,)      ),
-    ("acuVoltage"                   , np.uint16   , (6,)      ),
+    ("acuCurrent"                   , np.int16    , (5,)      ),
+    ("acuVoltage"                   , np.uint16   , (5,)      ),
     
     ("dockTemp"                     , np.int16   , (2,)      ),
     ("pduTemp"                      , np.int16   ,       ),
@@ -198,6 +230,8 @@ AC_HKExtraPack_t =  np.dtype([
     ("numAttitudeStars"             , np.uint8   ,    ),
     ("eigenError"                   , np.uint32   ,    ),
     ("sunVectorBody"                , np.int16   ,  (3,)   ),
+    ("magVectorBody"                , np.int16   ,  (3,)   ), # 2022.09.01 추가
+    
     ("rawSunSensorData"             , np.uint16   ,  (12,)   ),
     ("rawMagnetometerData"          , np.uint16   ,  (9,)   ),
     ("imuAvgVector"                 , np.float32   ,  (3,)   ),
@@ -241,9 +275,9 @@ HKFILE_H3 =  np.dtype([
 
 PC_PDHS_HKPack_t =  np.dtype([
     ("errorStatus"                  , np.uint8   ,      ),
-    ("temperature"                  , np.int16   ,     ),
     ("receivedCommandCount"         , np.uint32   ,      ),
     ("receivedCommandErrorCount"    , np.uint32   ,      ),
+    ("temperature"                  , np.int16   ,     ),
 ])
 
 HKFILE_H4 =  np.dtype([
@@ -398,16 +432,24 @@ class HKFILE_H1_c:
         spare1 = ((int(struct_data["soh"][0][3]) & 0xF0) >> 4) 
         
         pduDeviceStatus = int(struct_data["soh"][0][4])
+        
         powerSwitchStatus = int(struct_data["soh"][0][5]) | ((int(struct_data["soh"][0][6]) & 0x03) << 8)
+        xbandSwitchStatus = (int(struct_data["soh"][0][6]) & 0x0C) >> 2
+        pdhsSwitchStatus = (int(struct_data["soh"][0][6]) & 0x30) >> 4
+        polcubeSwitchStatus = (int(struct_data["soh"][0][6]) & 0xC0) >> 6
+        spare6 = (int(struct_data["soh"][0][6]) & 0xC0) >> 6
         
-        antennaXPHeater = (int(struct_data["soh"][0][6]) & 0x0C) >> 2
-        antennaXMHeater = (int(struct_data["soh"][0][6]) & 0x30) >> 4
-        eoc_Heater = (int(struct_data["soh"][0][6]) & 0xC0) >> 6
         
-        xbandSwitchStatus = (int(struct_data["soh"][0][7]) & 0x03)
-        pdhsSwitchStatus = (int(struct_data["soh"][0][7]) & 0x0C) >> 2
-        polcubeSwitchStatus = (int(struct_data["soh"][0][7]) & 0x30) >> 4
-        spare2 = (int(struct_data["soh"][0][7]) & 0xC0) >> 6
+        powerSwitchStatus = (int(struct_data["soh"][0][5]) & 0x7F)
+        xbandSwitchStatus = ((int(struct_data["soh"][0][5]) & 0x80) >> 7) | ((int(struct_data["soh"][0][6]) & 0x01) << 1)
+        pdhsSwitchStatus = (int(struct_data["soh"][0][6]) & 0x06) >> 1
+        polcubeSwitchStatus = (int(struct_data["soh"][0][6]) & 0x18) >> 3
+        spare6 = (int(struct_data["soh"][0][6]) & 0xE0) >> 5
+        
+        antXPHeaterSwitchStatus = (int(struct_data["soh"][0][7]) & 0x03)
+        antXMHeaterSwitchStatus = (int(struct_data["soh"][0][7]) & 0x0C) >> 2
+        eocHeaterSwitchStatus = (int(struct_data["soh"][0][7]) & 0x30) >> 4
+        spare7 = (int(struct_data["soh"][0][7]) & 0xC0) >> 6
         
         PrintAndCheck(1, 4, f'dockDeviceStatus', dockDeviceStatus, ValueType.HEX, 3)
         PrintAndCheck(1, 4, f'acuDeviceStatus', acuDeviceStatus, ValueType.HEX, 4)
@@ -415,15 +457,17 @@ class HKFILE_H1_c:
         PrintAndCheck(1, 4, f'spare1', spare1, ValueType.HEX, 1)
         
         PrintAndCheck(1, 4, f'pduDeviceStatus', pduDeviceStatus, ValueType.HEX, 2)
-        PrintAndCheck(1, 4, f'powerSwitchStatus', powerSwitchStatus, ValueType.HEX, 3)
-        PrintAndCheck(1, 4, f'antennaXPHeater', antennaXPHeater, ValueType.HEX, 1)
-        PrintAndCheck(1, 4, f'antennaXMHeater', antennaXMHeater, ValueType.HEX, 1)
-        PrintAndCheck(1, 4, f'eoc_Heater', eoc_Heater, ValueType.HEX, 1)
         
+        PrintAndCheck(1, 4, f'powerSwitchStatus', powerSwitchStatus, ValueType.HEX, 2)
         PrintAndCheck(1, 4, f'xbandSwitchStatus', xbandSwitchStatus, ValueType.HEX, 1)
         PrintAndCheck(1, 4, f'pdhsSwitchStatus', pdhsSwitchStatus, ValueType.HEX, 1)
         PrintAndCheck(1, 4, f'polcubeSwitchStatus', polcubeSwitchStatus, ValueType.HEX, 1)
-        PrintAndCheck(1, 4, f'spare2', spare2, ValueType.HEX, 1)
+        PrintAndCheck(1, 4, f'spare6', spare6, ValueType.HEX, 1)
+        
+        PrintAndCheck(1, 4, f'antXPHeaterSwitchStatus', antXPHeaterSwitchStatus, ValueType.HEX, 1)
+        PrintAndCheck(1, 4, f'antXMHeaterSwitchStatus', antXMHeaterSwitchStatus, ValueType.HEX, 1)
+        PrintAndCheck(1, 4, f'eocHeaterSwitchStatus', eocHeaterSwitchStatus, ValueType.HEX, 1)
+        PrintAndCheck(1, 4, f'spare7', spare7, ValueType.HEX, 1)
 
         
         for value in range(0, len(struct_data["SwitchCurrent"][0])):
@@ -753,6 +797,9 @@ class HKFILE_H6_c:
         for value in range(0, len(struct_data["sunVectorBody"][0])):
             PrintAndCheck(6, 1, f'sunVectorBody[{value}]', int(struct_data["sunVectorBody"][0][value]), ValueType.INT)
             
+        for value in range(0, len(struct_data["magVectorBody"][0])):
+            PrintAndCheck(6, 1, f'magVectorBody[{value}]', int(struct_data["magVectorBody"][0][value]), ValueType.INT)
+            
         for value in range(0, len(struct_data["rawSunSensorData"][0])):
             PrintAndCheck(6, 1, f'rawSunSensorData[{value}]', int(struct_data["rawSunSensorData"][0][value]), ValueType.INT)
             
@@ -847,17 +894,20 @@ def GetStructSize(file_type):
     return struct_size
 
 def CheckDummyData(file_type, struct_type, label, value):
-    temp = dummyDB[f'{file_type}.{struct_type}.{label}']
-    temp = temp.__str__()
-    
-    rtn = f'------ X ≠ {temp}'
-    #print(f' --- CheckDummyData check %s' % temp)
-    
-    if value == temp:
-        rtn = ''
-    # else:
-    #     print(f' --- CheckDummyData unmatch! {value} {temp}')
+    try:
+        temp = dummyDB[f'{file_type}.{struct_type}.{label}']
+        temp = temp.__str__()
         
+        rtn = '\033[31m' + f'------ X ≠ {temp}' + '\033[0m'
+        #print(f' --- CheckDummyData check %s' % temp)
+        
+        if value == temp:
+            rtn = ''
+        # else:
+        #     print(f' --- CheckDummyData unmatch! {value} {temp}')
+    except KeyError:
+        rtn = '\033[38;2;215;95;215m' + f'------ E : Key Not Found' + '\033[0m'
+
     return rtn
 
 def CheckDummyFloat(file_type, struct_type, label, value):
@@ -910,6 +960,30 @@ def ReadFile(filepath):
         hex_list = [c for c in fp.read()]
         
     return hex_list
+
+def CheckHKFileHeader(file_hex_data):
+    family = [ 'CFE_FS_Header_t', 
+                'DS_FileHeader_t'
+                ]
+    buf = []
+    header = np.frombuffer(file_hex_data, dtype=HKFILE_HEADER)
+    struct_data = np.frombuffer(header["CFE_FS_Header_t"], dtype=CFE_FS_Header_t)
+    #print(f'{print_bar_indent}   [CFE_FS_Header_t]')
+    #print(f'{print_indent} ContentType       : {struct_data["ContentType"]}')
+    content_type = int(struct_data["ContentType"])
+    content_type_buf = ((content_type & 0x000000FF) << (8 * 3))
+    content_type_buf |= ((content_type & 0x0000FF00) << (8 * 1))
+    content_type_buf |= ((content_type & 0x00FF0000) >> (8 * 1))
+    content_type_buf |= ((content_type & 0xFF000000) >> (8 * 3))
+    
+    content_type_ref = int(0x63464531)
+    
+    if content_type_buf == content_type_ref:
+        print(f'{print_indent} content_type match!')
+        return True
+    else:
+        print(f'{print_indent} content_type unmatch! {content_type_buf} ≠ {content_type_ref}')
+        return False
     
 def PrintFileData(file_type, file_hex_data, file_header_size, struct_size):
     
@@ -921,7 +995,7 @@ def PrintFileData(file_type, file_hex_data, file_header_size, struct_size):
     print(f'{print_indent} packet_line_count : {packet_line_count}')
     print(f'{print_indent} struct_size       : {struct_size}')
     print('')
-    a = input(f'Start Packet Show! (press any key)')
+    a = input('\033[38;5;208m' + f'Start Packet Show! (press any key)' + '\033[0m')
     
     for i in range(0, packet_line_count):
         file_input_buf = file_hex_data[start_index:end_index]
@@ -948,7 +1022,7 @@ def PrintFileData(file_type, file_hex_data, file_header_size, struct_size):
         end_index += struct_size
         print(f'end [{i + 1} / {packet_line_count}]')
         print(f'')
-        a = input(f'Show Next Packet (any key)? or Exit (q)?')
+        a = input('\033[38;5;208m' + f'Show Next Packet (any key)? or Exit (q)?' + '\033[0m')
         if a == 'q':
             break
         print(f'')
@@ -960,31 +1034,91 @@ def main():
         global print_only_unmatched
         
         parser = argparse.ArgumentParser(description='Observer HK File Data Extract Application CLI Mode Argument Help...')
-        parser.add_argument('-f', '--filepath', help='input file path', required=True)
+        #parser.add_argument('-f', '--filepath', help='input file path', required=True)
+        parser.add_argument('-d', '--dirpath', help='input directory path', required=True)
         parser.add_argument('-o', '--only_unmatched', help='print line only unmatched case', action='store_true')
-        
         args = parser.parse_args()
+        print('')
+        
         if args.only_unmatched:
             print_only_unmatched = True
             print(f'{print_indent} print only unmatched line = {print_only_unmatched}')
         else:
             print_only_unmatched = False
             print(f'{print_indent} print all line = {print_only_unmatched}')
+            
+        file_full_path_ok = False
         
-        if args.filepath:
-            print(f'{print_indent} input filepath : {args.filepath}')
-            rtn = os.path.isfile(args.filepath)
+        ## 디렉토리 경로에서 파일명 선택
+        if args.dirpath:
+            if os.path.exists(args.dirpath):
+                print(f'{print_indent} directory exist')
+                
+                file_list = os.listdir(args.dirpath)
+                file_list.sort()
+                file_index = 1
+                
+                print(f' ______________________________')
+                print(f' | index | file name   ')
+                print(f' ==============================')
+                for file_name in file_list:
+                    print(f' |  %03d  | {file_name}' % (file_index))
+                    file_index += 1
+                
+                print(f' ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾')
+                print('')
+                select_num = -1
+                for i in range(0, 3):
+                    a = input('\033[38;5;208m' + f'Input File Index...' + '\033[0m')
+                    if a == 'q':
+                        return
+                    elif a.isdigit():
+                        select_num = int(a)
+                        break
+                    else:
+                        print(f'{print_indent} Input Only Number...')
+
+                if select_num == -1:
+                    print(f'{print_indent} 3 strike out.. Bye~')
+                    return
+                else:
+                    file_full_path = f'{args.dirpath}/{file_list[select_num - 1]}'
+                    file_full_path_ok = True
+                    #print(f'{print_indent} file_full_path : {file_full_path}')
+            else:
+                print(f'{print_indent} directory not exist')
+        else:
+            print(f'{print_indent} directory path argument is empty!')
+        
+        ## 파일명 바탕으로 추출
+        if file_full_path_ok:
+            print('')
+            print(f'{print_indent} input filepath : {file_full_path}')
+            rtn = os.path.isfile(file_full_path)
             
             if rtn:
                 print(f'{print_indent} file exist check')
-                file_hex = ReadFile(args.filepath)
+                file_hex = ReadFile(file_full_path)
                 file_hex_size = len(file_hex)
                 print(f'{print_indent} file length : {file_hex_size}')
                 
+                #print(f'{print_indent} file_header_size1 : {np.dtype(CFE_FS_Header_t).itemsize}')
+                #print(f'{print_indent} file_header_size2 : {np.dtype(DS_FileHeader_t).itemsize}')
+                
+                file_header_input_buf = file_hex[0:76]
+                file_header_input_buf_bytes = bytes(file_header_input_buf)
+        
+                is_has_header = CheckHKFileHeader(file_header_input_buf_bytes)
+                global file_header_size 
+                if is_has_header:
+                    file_header_size = 140
+                else:
+                    file_header_size = 0
+                    
                 expect_file_size = file_header_size
                 struct_size = 0
                 
-                file_type = GetFileType(os.path.basename(args.filepath))
+                file_type = GetFileType(os.path.basename(file_full_path))
                 
                 struct_size = GetStructSize(file_type)
                 
@@ -1048,14 +1182,18 @@ if __name__ == "__main__":
     dummyDB["1.4.heaterStatus"] = 0x3
     dummyDB["1.4.spare1"] = 0x0
     dummyDB["1.4.pduDeviceStatus"] = 0x81
-    dummyDB["1.4.powerSwitchStatus"] = 0x231
-    dummyDB["1.4.antennaXPHeater"] = 0x3
-    dummyDB["1.4.antennaXMHeater"] = 0x0
-    dummyDB["1.4.eoc_Heater"] = 0x3
-    dummyDB["1.4.xbandSwitchStatus"] = 0x0
-    dummyDB["1.4.pdhsSwitchStatus"] = 0x3
-    dummyDB["1.4.polcubeSwitchStatus"] = 0x0
-    dummyDB["1.4.spare2"] = 0x0
+    
+    dummyDB["1.4.powerSwitchStatus"] = 0x49
+    dummyDB["1.4.xbandSwitchStatus"] = 0x3
+    dummyDB["1.4.pdhsSwitchStatus"] = 0x0
+    dummyDB["1.4.polcubeSwitchStatus"] = 0x3
+    dummyDB["1.4.spare6"] = 0x5
+    
+    dummyDB["1.4.antXPHeaterSwitchStatus"] = 0x0
+    dummyDB["1.4.antXMHeaterSwitchStatus"] = 0x3
+    dummyDB["1.4.eocHeaterSwitchStatus"] = 0x0
+    dummyDB["1.4.spare7"] = 0x0
+    
     dummyDB["1.4.SwitchCurrent[0]"] = -10001
     dummyDB["1.4.SwitchCurrent[1]"] = -10002
     dummyDB["1.4.SwitchCurrent[2]"] = -10003
@@ -1245,48 +1383,50 @@ if __name__ == "__main__":
     dummyDB["6.1.sunVectorBody[0]"] = 20064
     dummyDB["6.1.sunVectorBody[1]"] = 20065
     dummyDB["6.1.sunVectorBody[2]"] = 20066
-    dummyDB["6.1.rawSunSensorData[0]"] = 20067
-    dummyDB["6.1.rawSunSensorData[1]"] = 20068
-    dummyDB["6.1.rawSunSensorData[2]"] = 20069
-    dummyDB["6.1.rawSunSensorData[3]"] = 20070
-    dummyDB["6.1.rawSunSensorData[4]"] = 20071
-    dummyDB["6.1.rawSunSensorData[5]"] = 20072
-    dummyDB["6.1.rawSunSensorData[6]"] = 20073
-    dummyDB["6.1.rawSunSensorData[7]"] = 20074
-    dummyDB["6.1.rawSunSensorData[8]"] = 20075
-    dummyDB["6.1.rawSunSensorData[9]"] = 20076
-    dummyDB["6.1.rawSunSensorData[10]"] = 20077
-    dummyDB["6.1.rawSunSensorData[11]"] = 20078
-    dummyDB["6.1.rawMagnetometerData[0]"] = 20078
-    dummyDB["6.1.rawMagnetometerData[1]"] = 20079
-    dummyDB["6.1.rawMagnetometerData[2]"] = 20080
-    dummyDB["6.1.rawMagnetometerData[3]"] = 20081
-    dummyDB["6.1.rawMagnetometerData[4]"] = 20082
-    dummyDB["6.1.rawMagnetometerData[5]"] = 20083
-    dummyDB["6.1.rawMagnetometerData[6]"] = 20084
-    dummyDB["6.1.rawMagnetometerData[7]"] = 20085
-    dummyDB["6.1.rawMagnetometerData[8]"] = 20086
-    dummyDB["6.1.imuAvgVector[0]"] = 20086.008
-    dummyDB["6.1.imuAvgVector[1]"] = 20087.009
-    dummyDB["6.1.imuAvgVector[2]"] = 20088.010
-    dummyDB["6.1.imuAvgVectorFrame"] = 89
-    dummyDB["6.1.hrRunCount"] = 200090
-    dummyDB["6.1.hrTimeUsec"] = 200091
-    dummyDB["6.1.detTemp"] = 92
-    dummyDB["6.1.imuTemp"] = 20093
-    dummyDB["6.1.motorTemp[0]"] = 20094
-    dummyDB["6.1.motorTemp[1]"] = 20095
-    dummyDB["6.1.motorTemp[2]"] = 20096
-    dummyDB["6.1.digitalBus_V"] = 20097
-    dummyDB["6.1.motorBus_V"] = 20098
-    dummyDB["6.1.rodBus_v"] = 20099
-    dummyDB["6.1.gpsCyclesSinceCRCData"] = 200100
-    dummyDB["6.1.gpsCyclesSinceLatestData"] = 200101
-    dummyDB["6.1.gpsLockCount"] = 20102
-    dummyDB["6.1.avgTimeTag"] = 200103
+    dummyDB["6.1.magVectorBody[0]"] = 20067
+    dummyDB["6.1.magVectorBody[1]"] = 20068
+    dummyDB["6.1.magVectorBody[2]"] = 20069
     
-    print("Check Observer HK File Data !")
+    dummyDB["6.1.rawSunSensorData[0]"] = 20070
+    dummyDB["6.1.rawSunSensorData[1]"] = 20071
+    dummyDB["6.1.rawSunSensorData[2]"] = 20072
+    dummyDB["6.1.rawSunSensorData[3]"] = 20073
+    dummyDB["6.1.rawSunSensorData[4]"] = 20074
+    dummyDB["6.1.rawSunSensorData[5]"] = 20075
+    dummyDB["6.1.rawSunSensorData[6]"] = 20076
+    dummyDB["6.1.rawSunSensorData[7]"] = 20077
+    dummyDB["6.1.rawSunSensorData[8]"] = 20078
+    dummyDB["6.1.rawSunSensorData[9]"] = 20079
+    dummyDB["6.1.rawSunSensorData[10]"] = 20080
+    dummyDB["6.1.rawSunSensorData[11]"] = 20081
+    dummyDB["6.1.rawMagnetometerData[0]"] = 20082
+    dummyDB["6.1.rawMagnetometerData[1]"] = 20083
+    dummyDB["6.1.rawMagnetometerData[2]"] = 20084
+    dummyDB["6.1.rawMagnetometerData[3]"] = 20085
+    dummyDB["6.1.rawMagnetometerData[4]"] = 20086
+    dummyDB["6.1.rawMagnetometerData[5]"] = 20087
+    dummyDB["6.1.rawMagnetometerData[6]"] = 20088
+    dummyDB["6.1.rawMagnetometerData[7]"] = 20089
+    dummyDB["6.1.rawMagnetometerData[8]"] = 20090
+    dummyDB["6.1.imuAvgVector[0]"] = 20091.008
+    dummyDB["6.1.imuAvgVector[1]"] = 20092.009
+    dummyDB["6.1.imuAvgVector[2]"] = 20093.010
+    dummyDB["6.1.imuAvgVectorFrame"] = 94
+    dummyDB["6.1.hrRunCount"] = 200095
+    dummyDB["6.1.hrTimeUsec"] = 200096
+    dummyDB["6.1.detTemp"] = 97
+    dummyDB["6.1.imuTemp"] = 20098
+    dummyDB["6.1.motorTemp[0]"] = 20099
+    dummyDB["6.1.motorTemp[1]"] = 20100
+    dummyDB["6.1.motorTemp[2]"] = 20101
+    dummyDB["6.1.digitalBus_V"] = 20102
+    dummyDB["6.1.motorBus_V"] = 20103
+    dummyDB["6.1.rodBus_v"] = 20104
+    dummyDB["6.1.gpsCyclesSinceCRCData"] = 200105
+    dummyDB["6.1.gpsCyclesSinceLatestData"] = 200106
+    dummyDB["6.1.gpsLockCount"] = 20107
+    dummyDB["6.1.avgTimeTag"] = 200108
+    
+    print("\033[38;5;208mCheck Observer HK File Data !\033[0m")
     main()
-    
-    
     
