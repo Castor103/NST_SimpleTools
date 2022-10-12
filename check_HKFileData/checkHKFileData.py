@@ -32,6 +32,11 @@ class ValueType(enum.Enum):
 # 나머지는 각 app의 fsw->platform_inc->cs_msg.h 참조
 
 # 구조체 bit 배열시 순서대로 lsb먼저들어가게됨
+TimeStamp_t =  np.dtype([
+    ("timestamp"                    , np.uint32   ,       ),
+   
+])
+
 TestPack_t =  np.dtype([
     ("soh"                          , np.uint8   ,       ),
     ("ssoh"                         , np.uint8   ,       ),
@@ -161,6 +166,7 @@ CS_AX2150_HKPack_t =  np.dtype([
 
 
 HKFILE_H1 =  np.dtype([
+    ("TimeStamp_t"                  , np.dtype(TimeStamp_t)             ,       ),
     ("EPS_FSW_HKPack_t"             , np.dtype(EPS_FSW_HKPack_t)      ,       ),
     ("CDHS_HKPack_t"                , np.dtype(CDHS_HKPack_t)       ,        ),
     ("EPS_SP_HKPack_t"              , np.dtype(EPS_SP_HKPack_t)       ,       ),
@@ -254,6 +260,7 @@ AC_HKExtraPack_t =  np.dtype([
 ])
 
 HKFILE_H2 =  np.dtype([
+    ("TimeStamp_t"                  , np.dtype(TimeStamp_t)             ,       ),
     ("AC_HKPack_t"                  , np.dtype(AC_HKPack_t)      ,       ),
 ])
 
@@ -270,6 +277,7 @@ CS_EWC27_HKPack_t =  np.dtype([
 ])
 
 HKFILE_H3 =  np.dtype([
+    ("TimeStamp_t"                  , np.dtype(TimeStamp_t)             ,       ),
     ("CS_EWC27_HKPack_t"            , np.dtype(CS_EWC27_HKPack_t)      ,       ),
 ])
 
@@ -283,6 +291,7 @@ PC_PDHS_HKPack_t =  np.dtype([
 ])
 
 HKFILE_H4 =  np.dtype([
+    ("TimeStamp_t"                  , np.dtype(TimeStamp_t)             ,       ),
     ("PC_PDHS_HKPack_t"                , np.dtype(PC_PDHS_HKPack_t)      ,       ),
 ])
 
@@ -308,6 +317,7 @@ PC_PolCube_HK_t =  np.dtype([
 ])
 
 HKFILE_H5 =  np.dtype([
+    ("TimeStamp_t"                  , np.dtype(TimeStamp_t)             ,       ),
     ("PC_PolCube_SOH_t"                , np.dtype(PC_PolCube_SOH_t)      ,     ),
     ("PC_PolCube_HK_t"                 , np.dtype(PC_PolCube_HK_t)      ,       ),
 ])
@@ -315,13 +325,16 @@ HKFILE_H5 =  np.dtype([
 #######################################################################################
 
 HKFILE_H6 =  np.dtype([
+    ("TimeStamp_t"                  , np.dtype(TimeStamp_t)             ,       ),
     ("AC_HKExtraPack_t"                , np.dtype(AC_HKExtraPack_t)      ,       ),
 ])
 
 #######################################################################################
 
 class HKFILE_H1_c:
-    family = [  'EPS_FSW_HKPack_t', 
+    family = [  
+                'TimeStamp_t',
+                'EPS_FSW_HKPack_t', 
                 'CDHS_HKPack_t', 
                 'EPS_SP_HKPack_t', 
                 'EPS_P60_HKPack_t',
@@ -344,6 +357,12 @@ class HKFILE_H1_c:
         struct_data = np.frombuffer(self.buf, dtype=TestPack_t)
         temp = int(struct_data["soh"])
         print(f' soh    : {temp}')
+        
+    def case_TimeStamp_t(self):
+        print(f'{print_bar_indent}   [TimeStamp_t]')
+        struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
+        temp = int(struct_data["timestamp"])
+        PrintAndCheck(1, 0, f'timestamp', int(temp), ValueType.INT)
     
     def case_EPS_FSW_HKPack_t(self):
         print(f'{print_bar_indent}   [EPS_FSW_HKPack_t]')
@@ -365,7 +384,6 @@ class HKFILE_H1_c:
         PrintAndCheck(1, 1, f'rebootCount', int(struct_data["rebootCount"]), ValueType.INT)
         PrintAndCheck(1, 1, f'nandFlashCapacity', int(struct_data["nandFlashCapacity"]), ValueType.INT)
         PrintAndCheck(1, 1, f'sdCardCapacity', int(struct_data["sdCardCapacity"]), ValueType.INT)
-        
         
         print('')
     
@@ -523,7 +541,9 @@ class HKFILE_H1_c:
         PrintAndCheck(1, 5, f'bootCount', int(struct_data["bootCount"]), ValueType.HEX, 4)
         
 class HKFILE_H2_c:
-    family = [  'AC_HKPack_t', 
+    family = [  
+                'TimeStamp_t',
+                'AC_HKPack_t', 
                 ]
     
     def __init__(self, bytes_of_values):
@@ -537,6 +557,12 @@ class HKFILE_H2_c:
         self.case_name = "case_" + str(arg)
         self.case = getattr(self, self.case_name, lambda:"default")
         return self.case()
+    
+    def case_TimeStamp_t(self):
+        print(f'{print_bar_indent}   [TimeStamp_t]')
+        struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
+        temp = int(struct_data["timestamp"])
+        PrintAndCheck(2, 0, f'timestamp', int(temp), ValueType.INT)
  
     def case_AC_HKPack_t(self):
         print(f'{print_bar_indent}   [AC_HKPack_t]')
@@ -614,7 +640,9 @@ class HKFILE_H2_c:
         print('')
     
 class HKFILE_H3_c:
-    family = [  'CS_EWC27_HKPack_t', 
+    family = [  
+                'TimeStamp_t',
+                'CS_EWC27_HKPack_t', 
                 ]
     
     def __init__(self, bytes_of_values):
@@ -628,6 +656,12 @@ class HKFILE_H3_c:
         self.case_name = "case_" + str(arg)
         self.case = getattr(self, self.case_name, lambda:"default")
         return self.case()
+    
+    def case_TimeStamp_t(self):
+        print(f'{print_bar_indent}   [TimeStamp_t]')
+        struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
+        temp = int(struct_data["timestamp"])
+        PrintAndCheck(3, 0, f'timestamp', int(temp), ValueType.INT)
  
     def case_CS_EWC27_HKPack_t(self):
         print(f'{print_bar_indent}   [CS_EWC27_HKPack_t]')
@@ -646,7 +680,9 @@ class HKFILE_H3_c:
         print('')
 
 class HKFILE_H4_c:
-    family = [  'PC_PDHS_HKPack_t', 
+    family = [  
+                'TimeStamp_t',
+                'PC_PDHS_HKPack_t', 
                 ]
     
     def __init__(self, bytes_of_values):
@@ -660,6 +696,12 @@ class HKFILE_H4_c:
         self.case_name = "case_" + str(arg)
         self.case = getattr(self, self.case_name, lambda:"default")
         return self.case()
+    
+    def case_TimeStamp_t(self):
+        print(f'{print_bar_indent}   [TimeStamp_t]')
+        struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
+        temp = int(struct_data["timestamp"])
+        PrintAndCheck(4, 0, f'timestamp', int(temp), ValueType.INT)
  
     def case_PC_PDHS_HKPack_t(self):
         print(f'{print_bar_indent}   [PC_PDHS_HKPack_t]')
@@ -673,7 +715,9 @@ class HKFILE_H4_c:
         print('')            
         
 class HKFILE_H5_c:
-    family = [  'PC_PolCube_SOH_t', 
+    family = [
+                'TimeStamp_t',
+                'PC_PolCube_SOH_t', 
                 'PC_PolCube_HK_t',
                 ]
     
@@ -689,6 +733,12 @@ class HKFILE_H5_c:
         self.case = getattr(self, self.case_name, lambda:"default")
         return self.case()
  
+    def case_TimeStamp_t(self):
+        print(f'{print_bar_indent}   [TimeStamp_t]')
+        struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
+        temp = int(struct_data["timestamp"])
+        PrintAndCheck(5, 0, f'timestamp', int(temp), ValueType.INT)
+        
     def case_PC_PolCube_SOH_t(self):
         print(f'{print_bar_indent}   [PC_PolCube_SOH_t]')
         struct_data = np.frombuffer(self.buf, dtype=PC_PolCube_SOH_t)
@@ -737,10 +787,10 @@ class HKFILE_H5_c:
         print('')             
         
 class HKFILE_H6_c:
-    family = [  'AC_HKExtraPack_t', 
+    family = [  
+                'TimeStamp_t',
+                'AC_HKExtraPack_t', 
                 ]
-    
-    #family = [  'TestPack_t', ]
     
     def __init__(self, bytes_of_values):
         header = np.frombuffer(bytes_of_values, dtype=HKFILE_H6)
@@ -753,6 +803,12 @@ class HKFILE_H6_c:
         self.case_name = "case_" + str(arg)
         self.case = getattr(self, self.case_name, lambda:"default")
         return self.case()
+    
+    def case_TimeStamp_t(self):
+        print(f'{print_bar_indent}   [TimeStamp_t]')
+        struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
+        temp = int(struct_data["timestamp"])
+        PrintAndCheck(6, 0, f'timestamp', int(temp), ValueType.INT)
  
     def case_AC_HKExtraPack_t(self):
         print(f'{print_bar_indent}   [AC_HKExtraPack_t]')
@@ -865,6 +921,9 @@ def GetFileType(filename):
 
 def GetStructSize(file_type):
     struct_size = 0
+    
+    struct_size += np.dtype(TimeStamp_t).itemsize
+    print(f'{print_indent} np.dtype(TimeStamp_t).itemsize : {np.dtype(TimeStamp_t).itemsize}')
     
     if file_type == 1:
         struct_size += np.dtype(EPS_FSW_HKPack_t).itemsize
@@ -1138,7 +1197,6 @@ def main():
                 expect_file_size = file_header_size
                 struct_size = 0
                 
-                print(f'{print_indent} ------- 3')
                 file_type = GetFileType(os.path.basename(file_full_path))
                 
                 struct_size = GetStructSize(file_type)
@@ -1167,6 +1225,7 @@ def main():
 if __name__ == "__main__":
     
     ##############################################################################
+    dummyDB["1.0.timestamp"] = 123456
     dummyDB["1.1.selectedSband"] = 0
     dummyDB["1.1.sbandStatus_P"] = 1
     dummyDB["1.1.sbandStatus_R"] = 0
@@ -1286,7 +1345,7 @@ if __name__ == "__main__":
     dummyDB["1.5.bootCount"] = 0xf45f
     
     ##############################################################################
-    
+    dummyDB["2.0.timestamp"] = 123456
     dummyDB["2.1.l0_Status"] = 0x41
     dummyDB["2.1.momentumHealth"] = 0x11 
     dummyDB["2.1.magSourceUsed"] = 0x5
@@ -1329,6 +1388,7 @@ if __name__ == "__main__":
     
     ##############################################################################
     
+    dummyDB["3.0.timestamp"] = 123456
     dummyDB["3.1.sourceOfLastStartup"] = 0x201
     dummyDB["3.1.stateOfUnit"] = 0x01
     dummyDB["3.1.selfTestResult"] = 0x03
@@ -1336,6 +1396,7 @@ if __name__ == "__main__":
     
     ##############################################################################
     
+    dummyDB["4.0.timestamp"] = 123456
     dummyDB["4.1.errorStatus"] = 41
     dummyDB["4.1.temperature"] = -25535
     dummyDB["4.1.receivedCommandCount"] = 400002
@@ -1343,6 +1404,7 @@ if __name__ == "__main__":
     
     ##############################################################################
     
+    dummyDB["5.0.timestamp"] = 123456
     dummyDB["5.1.1.cameraId"] = 0x0
     dummyDB["5.1.1.binningStatus"] = 0x0
     dummyDB["5.1.1.ldoStatus"] = 0x1
@@ -1366,6 +1428,7 @@ if __name__ == "__main__":
     
     ##############################################################################
     
+    dummyDB["6.0.timestamp"] = 123456
     dummyDB["6.1.l0_Status[0]"] = 268374015
     dummyDB["6.1.l0_Status[1]"] = 81331417
     dummyDB["6.1.l0_Status[2]"] = 121964357
