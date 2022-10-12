@@ -99,40 +99,38 @@ EPS_SP_HKPack_t =  np.dtype([
     ("panelTemp_ST"                 , np.int16   , (4,)      ),
     ("panelTemp_UTT"                , np.int16   , (3,)      ),
     ("panelTemp_UBT"                , np.int16   , (3,)      ),
-    ("antennaTemp"                  , np.int16   , (2,)      ),
-    ("eocTemp"                      , np.int16   , (2,)      ),
+    ("adcTemp"                      , np.int16   , (4,)      ),
   
 ])
 
 EPS_P60_HKPack_t =  np.dtype([
     ("soh"                          , np.uint8   , (8,)      ),
-#     uint32                          dockDeviceStatus    : 12; 8 4~
-#     uint32                          acuDeviceStatus     : 14; ~4 8 2~
-#     uint32                          heaterStatus        :  2;
-#     uint32                          spare1              :  4;
-
+#     uint16                          dockDeviceStatus    : 12; 8 4~
+#     uint16                          spare1              :  4; ~4
+#     uint16                          acuDeviceStatus     : 14; 8 6~
+#     uint16                          heaterStatus        :  2; ~2
 #     uint8                           pduDeviceStatus     :  8;
     
     # 2022.09.01 --------------------------------------------------------------
-    # uint16_t                        powerSwitchStatus         :   7;
+    # uint8_t                         powerSwitchStatus         :   7;
+    # uint8_t                         spare2                    :   1;
+    
     # uint16_t                        xbandSwitchStatus         :   2;
     # uint16_t                        pdhsSwitchStatus          :   2;
     # uint16_t                        polcubeSwitchStatus       :   2;
-    # uint16_t                        spare6                    :   3;
+    # uint16_t                        spare3                    :   2;
     
     # uint8_t                         antXPHeaterSwitchStatus   :   2;
     # uint8_t                         antXMHeaterSwitchStatus   :   2;
     # uint8_t                         eocHeaterSwitchStatus     :   2;
-    # uint8_t                         spare7                    :   2;
+    # uint8_t                         spare4                    :   2;
     
-
-
     ("SwitchCurrent"                , np.int16    , (7,)      ),
     ("SwitchVoltage"                , np.uint16   , (7,)      ),
     ("SwitchlatchupCount"           , np.uint16   , (7,)      ),
     ("docklatchupCount"             , np.uint16   , (4,)      ),
-    ("acuCurrent"                   , np.int16    , (5,)      ),
-    ("acuVoltage"                   , np.uint16   , (5,)      ),
+    ("acuCurrent"                   , np.int16    , (6,)      ),
+    ("acuVoltage"                   , np.uint16   , (6,)      ),
     
     ("dockTemp"                     , np.int16   , (2,)      ),
     ("pduTemp"                      , np.int16   ,       ),
@@ -145,6 +143,8 @@ EPS_P60_HKPack_t =  np.dtype([
     ("dockBootcause"                , np.int8   ,       ),
     ("acuBootcause"                 , np.int8   ,       ),
     ("pduBootcause"                 , np.int8   ,       ),
+    
+    ("bpxBootcause"                 , np.int8   ,       ),
 ])
 
 CS_AX2150_HKPack_t =  np.dtype([
@@ -171,46 +171,49 @@ HKFILE_H1 =  np.dtype([
 #######################################################################################
 
 AC_HKPack_t =  np.dtype([
-    ("soh"                          , np.uint8   ,  (10,)       ),
+    ("soh"                          , np.uint8   ,  (8,)       ),
     # uint16                          l0_Status               : 7; 7~
     # uint16                          momentumHealth          : 5; ~1, 4~
     # uint16                          magSourceUsed           : 4; ~4
-
-    # uint32                          timeValid               : 1; 1~
-    # uint32                          refs_valid              : 1; ~1~
-    # uint32                          attCtrlHealth           : 3; ~3~
-    # uint32                          sttOperatingMode        : 3; ~3,
-    # uint32                          torqueRodeMode1         : 4; 4~
-    # uint32                          torqueRodeMode2         : 4; ~4,
-    # uint32                          torqueRodeMode3         : 4; 4~
-    # uint32                          torqueRodeFiringPack    : 6; ~4, 2~
-    # uint32                          tableUploadStatus       : 5; ~5~
-    # uint32                          spare1                  : 1; ~1
-
-    # uint32                          sunPoint_state          : 3; 3~       // 4 -> 3
-    # uint32                          attDetHealth            : 3; ~3~
-    # uint32                          attCmdHealth            : 5; ~2, 3~
-    # uint32                          attStatus               : 5; ~5,
-    # uint32                          runLowRateTask          : 1; 1~
-    # uint32                          magHealth               : 2; ~2~
-    # uint32                          cssHealth               : 2; ~2~
-    # uint32                          imuHealth               : 2; ~2~
-    # uint32                          gpsHealth               : 6; ~1, 5~
-    # uint16                          spare2                  : 3; ~3,      // 2 -> 3
     
-    ("taiSeconds"                   , np.uint64   ,      ),
+    # uint8                           timeValid               : 1;
+    # uint8                           refs_valid              : 1;
+    # uint8                           attCtrlHealth           : 3;
+    # uint8                           sttOperatingMode        : 3;
+    
+    # uint8                           torqueRodeFiringPack    : 6;
+    # uint8                           magHealth               : 2;
+    
+    # uint8                           gpsHealth               : 6;
+    # uint8                           cssHealth               : 2;
+    
+    # uint8                           attDetHealth            : 3;
+    # uint8                           attCmdHealth            : 5;
+    
+    # uint8                           imuHealth               : 2;
+    # uint8                           runLowRateTask          : 1;
+    # uint8                           attStatus               : 5;
+    
+    # uint8                           tableUploadStatus       : 5;
+    # uint8                           sunPointState           : 3;
+    
+    
+    ("taiSeconds"                   , np.double   ,      ),
     ("positionWrt_ECI"              , np.double   , (3,)     ),
     ("velocityWrt_ECI"              , np.double   , (3,)     ),
     ("qBodyWrt_ECI"                 , np.int32   , (4,)     ),
     ("filteredSpeed_RPM"            , np.int16   , (3,)     ),
+    ("torqDutyCycle"                , np.uint8   , (3,)     ),
     ("totalMomentumMag"             , np.float32   ,      ),
     
 ])
 
 AC_HKExtraPack_t =  np.dtype([
-    ("l0_Status"                    , np.uint32   ,  (7,)       ),
-    ("lastAcceptCmd"                , np.uint8   ,  (3,)       ),
-    ("lastRejCmd"                   , np.uint8   ,  (3,)       ),
+    ("l0_Status"                    , np.uint32   ,  (6,)       ),
+    ("cmdRejCount"                  , np.uint8   ,        ),
+    ("cmdAccCount"                  , np.uint8   ,        ),
+    ("lastAcceptCmd"                , np.uint8   ,  (2,)       ),
+    ("lastRejCmd"                   , np.uint8   ,  (2,)       ),
     ("inertia"                      , np.int32   ,  (3,)       ),
     ("badAttTimer"                  , np.uint32   ,       ),
     ("badRateTimer"                 , np.uint32   ,       ),
@@ -230,8 +233,7 @@ AC_HKExtraPack_t =  np.dtype([
     ("numAttitudeStars"             , np.uint8   ,    ),
     ("eigenError"                   , np.uint32   ,    ),
     ("sunVectorBody"                , np.int16   ,  (3,)   ),
-    ("magVectorBody"                , np.int16   ,  (3,)   ), # 2022.09.01 추가
-    
+    ("magVectorBody"                , np.int16   ,  (3,)   ),
     ("rawSunSensorData"             , np.uint16   ,  (12,)   ),
     ("rawMagnetometerData"          , np.uint16   ,  (9,)   ),
     ("imuAvgVector"                 , np.float32   ,  (3,)   ),
@@ -287,7 +289,7 @@ HKFILE_H4 =  np.dtype([
 #######################################################################################
 
 PC_PolCube_SOH_t =  np.dtype([
-    ("boardstatus"                  , np.uint8   ,   ),
+    ("boardstatus"                  , np.uint8   ,  (2, )  ),
     # uint16   cameraId                : 1;    // Board ID: 0 - PolCube1, 1 - PolCube2
     # uint16   binningStatus           : 1;    // Binning Status: 0 - Stop, 1 - Run 
     # uint16   ldoStatus               : 1;    // LDO Status: 0 - Off, 1 - On
@@ -296,17 +298,17 @@ PC_PolCube_SOH_t =  np.dtype([
 ])
 
 PC_PolCube_HK_t =  np.dtype([
-    ("currentTime"                      , np.uint32   ,     ),
+    ("currentTime"                      , np.uint32   , (2,)    ),
     ("ldoBoardTemp"                     , np.uint16   ,     ),
     ("powerBoardTemp"                   , np.uint16   ,     ),
     ("ScifBoardTemp"                    , np.uint16   ,     ),
     ("FpgaTemp"                         , np.uint16   ,     ),
-    ("SensorTemp"                       , np.uint16   ,     ),
+    ("SensorTemp"                       , np.uint16   , (2,)    ),
     
 ])
 
 HKFILE_H5 =  np.dtype([
-    ("PC_PolCube_SOH_t"                , np.dtype(PC_PolCube_SOH_t)      ,       ),
+    ("PC_PolCube_SOH_t"                , np.dtype(PC_PolCube_SOH_t)      ,     ),
     ("PC_PolCube_HK_t"                 , np.dtype(PC_PolCube_HK_t)      ,       ),
 ])
 
@@ -398,23 +400,19 @@ class HKFILE_H1_c:
         
         label = "panelTemp_ST"
         for i in range(0, len(struct_data[label][0])):
-            PrintAndCheck(1, 3, f'{label}_{i}', int(struct_data[label][0][i]), ValueType.INT)
+            PrintAndCheck(1, 3, f'{label}[{i}]', int(struct_data[label][0][i]), ValueType.INT)
         
         label = "panelTemp_UTT"
         for i in range(0, len(struct_data[label][0])):
-            PrintAndCheck(1, 3, f'{label}_{i}', int(struct_data[label][0][i]), ValueType.INT)
+            PrintAndCheck(1, 3, f'{label}[{i}]', int(struct_data[label][0][i]), ValueType.INT)
                         
         label = "panelTemp_UBT"
         for i in range(0, len(struct_data[label][0])):
-            PrintAndCheck(1, 3, f'{label}_{i}', int(struct_data[label][0][i]), ValueType.INT)
-            
-        label = "antennaTemp"
+            PrintAndCheck(1, 3, f'{label}[{i}]', int(struct_data[label][0][i]), ValueType.INT)
+                       
+        label = "adcTemp"
         for i in range(0, len(struct_data[label][0])):
-            PrintAndCheck(1, 3, f'{label}_{i}', int(struct_data[label][0][i]), ValueType.INT)
-            
-        label = "eocTemp"
-        for i in range(0, len(struct_data[label][0])):
-            PrintAndCheck(1, 3, f'{label}_{i}', int(struct_data[label][0][i]), ValueType.INT)
+            PrintAndCheck(1, 3, f'{label}[{i}]', int(struct_data[label][0][i]), ValueType.INT)
        
         print('')
         
@@ -427,48 +425,42 @@ class HKFILE_H1_c:
         #print(f' ------ {struct_data["soh"][0][1]}')
         
         dockDeviceStatus = int(struct_data["soh"][0][0]) | ((int(struct_data["soh"][0][1]) & 0x0F) << 8)
-        acuDeviceStatus = (int(struct_data["soh"][0][2]) << 4) | ((int(struct_data["soh"][0][1]) & 0xF0) >> 4) | ((int(struct_data["soh"][0][3]) & 0x03) << 12) 
-        heaterStatus = ((int(struct_data["soh"][0][3]) & 0x0C) >> 2) 
-        spare1 = ((int(struct_data["soh"][0][3]) & 0xF0) >> 4) 
-        
+        spare1 = ((int(struct_data["soh"][0][1]) & 0xF0) >> 4) 
+        acuDeviceStatus = int(struct_data["soh"][0][2]) | ((int(struct_data["soh"][0][3]) & 0x3F) << 8) 
+        heaterStatus = ((int(struct_data["soh"][0][3]) & 0xC0) >> 6) 
         pduDeviceStatus = int(struct_data["soh"][0][4])
         
-        powerSwitchStatus = int(struct_data["soh"][0][5]) | ((int(struct_data["soh"][0][6]) & 0x03) << 8)
-        xbandSwitchStatus = (int(struct_data["soh"][0][6]) & 0x0C) >> 2
-        pdhsSwitchStatus = (int(struct_data["soh"][0][6]) & 0x30) >> 4
-        polcubeSwitchStatus = (int(struct_data["soh"][0][6]) & 0xC0) >> 6
-        spare6 = (int(struct_data["soh"][0][6]) & 0xC0) >> 6
-        
-        
         powerSwitchStatus = (int(struct_data["soh"][0][5]) & 0x7F)
-        xbandSwitchStatus = ((int(struct_data["soh"][0][5]) & 0x80) >> 7) | ((int(struct_data["soh"][0][6]) & 0x01) << 1)
-        pdhsSwitchStatus = (int(struct_data["soh"][0][6]) & 0x06) >> 1
-        polcubeSwitchStatus = (int(struct_data["soh"][0][6]) & 0x18) >> 3
-        spare6 = (int(struct_data["soh"][0][6]) & 0xE0) >> 5
+        spare2 = (int(struct_data["soh"][0][5]) & 0x80) >> 7
+        
+        xbandSwitchStatus = (int(struct_data["soh"][0][6]) & 0x03)
+        pdhsSwitchStatus = (int(struct_data["soh"][0][6]) & 0x0C) >> 2
+        polcubeSwitchStatus = (int(struct_data["soh"][0][6]) & 0x30) >> 4
+        spare3 = (int(struct_data["soh"][0][6]) & 0xC0) >> 6
         
         antXPHeaterSwitchStatus = (int(struct_data["soh"][0][7]) & 0x03)
         antXMHeaterSwitchStatus = (int(struct_data["soh"][0][7]) & 0x0C) >> 2
         eocHeaterSwitchStatus = (int(struct_data["soh"][0][7]) & 0x30) >> 4
-        spare7 = (int(struct_data["soh"][0][7]) & 0xC0) >> 6
+        spare4 = (int(struct_data["soh"][0][7]) & 0xC0) >> 6
         
         PrintAndCheck(1, 4, f'dockDeviceStatus', dockDeviceStatus, ValueType.HEX, 3)
+        PrintAndCheck(1, 4, f'spare1', spare1, ValueType.HEX, 1)
         PrintAndCheck(1, 4, f'acuDeviceStatus', acuDeviceStatus, ValueType.HEX, 4)
         PrintAndCheck(1, 4, f'heaterStatus', heaterStatus, ValueType.HEX, 1)
-        PrintAndCheck(1, 4, f'spare1', spare1, ValueType.HEX, 1)
-        
         PrintAndCheck(1, 4, f'pduDeviceStatus', pduDeviceStatus, ValueType.HEX, 2)
         
         PrintAndCheck(1, 4, f'powerSwitchStatus', powerSwitchStatus, ValueType.HEX, 2)
+        PrintAndCheck(1, 4, f'spare2', spare2, ValueType.HEX, 1)
+        
         PrintAndCheck(1, 4, f'xbandSwitchStatus', xbandSwitchStatus, ValueType.HEX, 1)
         PrintAndCheck(1, 4, f'pdhsSwitchStatus', pdhsSwitchStatus, ValueType.HEX, 1)
         PrintAndCheck(1, 4, f'polcubeSwitchStatus', polcubeSwitchStatus, ValueType.HEX, 1)
-        PrintAndCheck(1, 4, f'spare6', spare6, ValueType.HEX, 1)
+        PrintAndCheck(1, 4, f'spare3', spare3, ValueType.HEX, 1)
         
         PrintAndCheck(1, 4, f'antXPHeaterSwitchStatus', antXPHeaterSwitchStatus, ValueType.HEX, 1)
         PrintAndCheck(1, 4, f'antXMHeaterSwitchStatus', antXMHeaterSwitchStatus, ValueType.HEX, 1)
         PrintAndCheck(1, 4, f'eocHeaterSwitchStatus', eocHeaterSwitchStatus, ValueType.HEX, 1)
-        PrintAndCheck(1, 4, f'spare7', spare7, ValueType.HEX, 1)
-
+        PrintAndCheck(1, 4, f'spare4', spare4, ValueType.HEX, 1)
         
         for value in range(0, len(struct_data["SwitchCurrent"][0])):
             PrintAndCheck(1, 4, f'SwitchCurrent[{value}]', int(struct_data["SwitchCurrent"][0][value]), ValueType.INT)
@@ -505,6 +497,11 @@ class HKFILE_H1_c:
         PrintAndCheck(1, 4, f'dockBootcause', int(struct_data["dockBootcause"]), ValueType.INT)
         PrintAndCheck(1, 4, f'acuBootcause', int(struct_data["acuBootcause"]), ValueType.INT)
         PrintAndCheck(1, 4, f'pduBootcause', int(struct_data["pduBootcause"]), ValueType.INT)
+        
+        bpx1Bootcause = (int(struct_data["bpxBootcause"][0]) & 0x0F)
+        bpx2Bootcause = (int(struct_data["bpxBootcause"][0]) & 0xF0) >> 4
+        PrintAndCheck(1, 4, f'bpx1Bootcause', int(bpx1Bootcause), ValueType.INT)
+        PrintAndCheck(1, 4, f'bpx2Bootcause', int(bpx2Bootcause), ValueType.INT)
         
         print('')
         
@@ -550,28 +547,26 @@ class HKFILE_H2_c:
         magSourceUsed = ((int(struct_data["soh"][0][1]) & 0xF0) >> 4)
         
         timeValid = (int(struct_data["soh"][0][2]) & 0x01)
-        refs_valid = (int(struct_data["soh"][0][2]) & 0x02)
+        refs_valid = (int(struct_data["soh"][0][2]) & 0x02) >> 1
         attCtrlHealth = (int(struct_data["soh"][0][2]) & 0x1C) >> 2
         sttOperatingMode = (int(struct_data["soh"][0][2]) & 0xE0) >> 5
         
-        torqueRodeMode1 = int(struct_data["soh"][0][3]) & 0x0F
-        torqueRodeMode2 = (int(struct_data["soh"][0][3]) & 0xF0) >> 4
-        torqueRodeMode3 = (int(struct_data["soh"][0][4]) & 0x0F)
-        torqueRodeFiringPack = ((int(struct_data["soh"][0][4]) & 0xF0) >> 4) | ((int(struct_data["soh"][0][5]) & 0x03) << 4)
-        tableUploadStatus = ((int(struct_data["soh"][0][5]) & 0x7C) >> 2)
-        spare1 = ((int(struct_data["soh"][0][5]) & 0x80) >> 7)
+        torqueRodeFiringPack = (int(struct_data["soh"][0][3]) & 0x3F)
+        magHealth = (int(struct_data["soh"][0][3]) & 0xC0) >> 6
         
-        sunPoint_state = (int(struct_data["soh"][0][6]) & 0x07)
-        attDetHealth = (int(struct_data["soh"][0][6]) & 0x38) >> 3
-        attCmdHealth = ((int(struct_data["soh"][0][6]) & 0xC0) >> 6) |  ((int(struct_data["soh"][0][7]) & 0x07) << 2)
-        attStatus = ((int(struct_data["soh"][0][7]) & 0xF8) >> 3)
-        runLowRateTask = (int(struct_data["soh"][0][8]) & 0x01)
+        gpsHealth = (int(struct_data["soh"][0][4]) & 0x3F)
+        cssHealth = (int(struct_data["soh"][0][4]) & 0xC0) >> 6
         
-        magHealth = ((int(struct_data["soh"][0][8]) & 0x06) >> 1)
-        cssHealth = ((int(struct_data["soh"][0][8]) & 0x18) >> 3)
-        imuHealth = ((int(struct_data["soh"][0][8]) & 0x60) >> 5) 
-        gpsHealth = ((int(struct_data["soh"][0][8]) & 0x80) >> 7) | ((int(struct_data["soh"][0][9]) & 0x1F) << 1)
-        spare2 = (int(struct_data["soh"][0][9]) & 0xE0) >> 5
+        attDetHealth = (int(struct_data["soh"][0][5]) & 0x07)
+        attCmdHealth = ((int(struct_data["soh"][0][5]) & 0xF8) >> 3)
+        
+        imuHealth = (int(struct_data["soh"][0][6]) & 0x03)
+        runLowRateTask = (int(struct_data["soh"][0][6]) & 0x04) >> 2
+        attStatus = ((int(struct_data["soh"][0][6]) & 0xF8) >> 3)
+        
+        tableUploadStatus = (int(struct_data["soh"][0][7]) & 0x1F)
+        sunPoint_state = (int(struct_data["soh"][0][7]) & 0xE0) >> 5
+        
         
         PrintAndCheck(2, 1, f'l0_Status', eval(f'l0_Status'), ValueType.HEX, 2)
         PrintAndCheck(2, 1, f'momentumHealth', momentumHealth, ValueType.HEX, 2)
@@ -582,25 +577,19 @@ class HKFILE_H2_c:
         PrintAndCheck(2, 1, f'attCtrlHealth', attCtrlHealth, ValueType.HEX, 1)
         PrintAndCheck(2, 1, f'sttOperatingMode', sttOperatingMode, ValueType.HEX, 1)
         
-        PrintAndCheck(2, 1, f'torqueRodeMode1', torqueRodeMode1, ValueType.HEX, 1)
-        PrintAndCheck(2, 1, f'torqueRodeMode2', torqueRodeMode2, ValueType.HEX, 1)
-        PrintAndCheck(2, 1, f'torqueRodeMode3', torqueRodeMode3, ValueType.HEX, 1)
         PrintAndCheck(2, 1, f'torqueRodeFiringPack', torqueRodeFiringPack, ValueType.HEX, 2)
-        PrintAndCheck(2, 1, f'tableUploadStatus', tableUploadStatus, ValueType.HEX, 2)
-        PrintAndCheck(2, 1, f'spare1', spare1, ValueType.HEX, 1)
-        
-        PrintAndCheck(2, 1, f'sunPoint_state', sunPoint_state, ValueType.HEX, 1)
+        PrintAndCheck(2, 1, f'magHealth', magHealth, ValueType.HEX, 1)
+        PrintAndCheck(2, 1, f'gpsHealth', gpsHealth, ValueType.HEX, 2)
+        PrintAndCheck(2, 1, f'cssHealth', cssHealth, ValueType.HEX, 1)
         PrintAndCheck(2, 1, f'attDetHealth', attDetHealth, ValueType.HEX, 1)
         PrintAndCheck(2, 1, f'attCmdHealth', attCmdHealth, ValueType.HEX, 2)
-        PrintAndCheck(2, 1, f'attStatus', attStatus, ValueType.HEX, 2)
-        PrintAndCheck(2, 1, f'runLowRateTask', runLowRateTask, ValueType.HEX, 1)
-        PrintAndCheck(2, 1, f'magHealth', magHealth, ValueType.HEX, 1)
-        
-        PrintAndCheck(2, 1, f'cssHealth', cssHealth, ValueType.HEX, 1)
         PrintAndCheck(2, 1, f'imuHealth', imuHealth, ValueType.HEX, 1)
-        PrintAndCheck(2, 1, f'gpsHealth', gpsHealth, ValueType.HEX, 2)
-        PrintAndCheck(2, 1, f'spare2', spare2, ValueType.HEX, 1)
-        PrintAndCheck(2, 1, f'taiSeconds', int(struct_data["taiSeconds"]), ValueType.INT)
+        PrintAndCheck(2, 1, f'runLowRateTask', runLowRateTask, ValueType.HEX, 1)
+        PrintAndCheck(2, 1, f'attStatus', attStatus, ValueType.HEX, 2)
+        PrintAndCheck(2, 1, f'tableUploadStatus', tableUploadStatus, ValueType.HEX, 2)
+        PrintAndCheck(2, 1, f'sunPoint_state', sunPoint_state, ValueType.HEX, 1)
+        
+        PrintAndCheck(2, 1, f'taiSeconds', float(struct_data["taiSeconds"]), ValueType.FLOAT)
         
         for value in range(0, len(struct_data["positionWrt_ECI"][0])):
             #print(f' positionWrt_ECI[%d]                 : %.3lf' % (value, float(struct_data["positionWrt_ECI"][0][value])))
@@ -615,6 +604,9 @@ class HKFILE_H2_c:
             
         for value in range(0, len(struct_data["filteredSpeed_RPM"][0])):
             PrintAndCheck(2, 1, f'filteredSpeed_RPM[{value}]',int(struct_data["filteredSpeed_RPM"][0][value]), ValueType.INT)
+            
+        for value in range(0, len(struct_data["torqDutyCycle"][0])):
+            PrintAndCheck(2, 1, f'torqDutyCycle[{value}]',int(struct_data["torqDutyCycle"][0][value]), ValueType.INT)
             
         #print(f' totalMomentumMag                   : %.3lf' % float(struct_data["totalMomentumMag"]))
         PrintAndCheck(2, 1, f'totalMomentumMag', float(struct_data["totalMomentumMag"]), ValueType.FLOAT)
@@ -648,6 +640,7 @@ class HKFILE_H3_c:
         PrintAndCheck(3, 1, f'sourceOfLastStartup', sourceOfLastStartup, ValueType.HEX, 3)
         PrintAndCheck(3, 1, f'stateOfUnit', stateOfUnit, ValueType.HEX, 1)
         PrintAndCheck(3, 1, f'selfTestResult', selfTestResult, ValueType.HEX, 1)
+        
         PrintAndCheck(3, 1, f'temperature', int(struct_data["temperature"]), ValueType.INT)
 
         print('')
@@ -700,17 +693,29 @@ class HKFILE_H5_c:
         print(f'{print_bar_indent}   [PC_PolCube_SOH_t]')
         struct_data = np.frombuffer(self.buf, dtype=PC_PolCube_SOH_t)
        
-        cameraId =  (int(struct_data["boardstatus"]) & 0x01)
-        binningStatus =  (int(struct_data["boardstatus"]) & 0x02) >> 1
-        ldoStatus =  (int(struct_data["boardstatus"]) & 0x04) >> 2
-        sensorSyncStatus =  (int(struct_data["boardstatus"]) & 0x08) >> 3
-        reserved =  ((int(struct_data["boardstatus"]) & 0xF0) >> 4)
+        cameraId =  (int(struct_data["boardstatus"][0][0]) & 0x01)
+        binningStatus =  (int(struct_data["boardstatus"][0][0]) & 0x02) >> 1
+        ldoStatus =  (int(struct_data["boardstatus"][0][0]) & 0x04) >> 2
+        sensorSyncStatus =  (int(struct_data["boardstatus"][0][0]) & 0x08) >> 3
+        reserved =  ((int(struct_data["boardstatus"][0][0]) & 0xF0) >> 4)
         
-        PrintAndCheck(5, 1, f'cameraId', cameraId, ValueType.HEX, 1)
-        PrintAndCheck(5, 1, f'binningStatus', binningStatus, ValueType.HEX, 1)
-        PrintAndCheck(5, 1, f'ldoStatus', ldoStatus, ValueType.HEX, 1)
-        PrintAndCheck(5, 1, f'sensorSyncStatus', sensorSyncStatus, ValueType.HEX, 1)
-        PrintAndCheck(5, 1, f'reserved', reserved, ValueType.HEX, 3)
+        PrintAndCheck(5, 1, f'1.cameraId', cameraId, ValueType.HEX, 1)
+        PrintAndCheck(5, 1, f'1.binningStatus', binningStatus, ValueType.HEX, 1)
+        PrintAndCheck(5, 1, f'1.ldoStatus', ldoStatus, ValueType.HEX, 1)
+        PrintAndCheck(5, 1, f'1.sensorSyncStatus', sensorSyncStatus, ValueType.HEX, 1)
+        PrintAndCheck(5, 1, f'1.reserved', reserved, ValueType.HEX, 3)
+       
+        cameraId =  (int(struct_data["boardstatus"][0][1]) & 0x01)
+        binningStatus =  (int(struct_data["boardstatus"][0][1]) & 0x02) >> 1
+        ldoStatus =  (int(struct_data["boardstatus"][0][1]) & 0x04) >> 2
+        sensorSyncStatus =  (int(struct_data["boardstatus"][0][1]) & 0x08) >> 3
+        reserved =  ((int(struct_data["boardstatus"][0][1]) & 0xF0) >> 4)
+        
+        PrintAndCheck(5, 1, f'2.cameraId', cameraId, ValueType.HEX, 1)
+        PrintAndCheck(5, 1, f'2.binningStatus', binningStatus, ValueType.HEX, 1)
+        PrintAndCheck(5, 1, f'2.ldoStatus', ldoStatus, ValueType.HEX, 1)
+        PrintAndCheck(5, 1, f'2.sensorSyncStatus', sensorSyncStatus, ValueType.HEX, 1)
+        PrintAndCheck(5, 1, f'2.reserved', reserved, ValueType.HEX, 3)
 
         print('')            
     
@@ -718,12 +723,16 @@ class HKFILE_H5_c:
         print(f'{print_bar_indent}   [PC_PolCube_HK_t]')
         struct_data = np.frombuffer(self.buf, dtype=PC_PolCube_HK_t)
        
-        PrintAndCheck(5, 2, f'currentTime', int(struct_data["currentTime"]), ValueType.INT)
+        for value in range(0, len(struct_data["currentTime"][0])):
+            PrintAndCheck(5, 2, f'currentTime[{value}]', int(struct_data["currentTime"][0][value]), ValueType.INT)
+       
         PrintAndCheck(5, 2, f'ldoBoardTemp', int(struct_data["ldoBoardTemp"]), ValueType.INT)
         PrintAndCheck(5, 2, f'powerBoardTemp', int(struct_data["powerBoardTemp"]), ValueType.INT)
         PrintAndCheck(5, 2, f'ScifBoardTemp', int(struct_data["ScifBoardTemp"]), ValueType.INT)
         PrintAndCheck(5, 2, f'FpgaTemp', int(struct_data["FpgaTemp"]), ValueType.INT)
-        PrintAndCheck(5, 2, f'SensorTemp', int(struct_data["SensorTemp"]), ValueType.INT)
+        
+        for value in range(0, len(struct_data["SensorTemp"][0])):
+            PrintAndCheck(5, 2, f'SensorTemp[{value}]',int(struct_data["SensorTemp"][0][value]), ValueType.INT)
 
         print('')             
         
@@ -751,6 +760,9 @@ class HKFILE_H6_c:
         
         for value in range(0, len(struct_data["l0_Status"][0])):
             PrintAndCheck(6, 1, f'l0_Status[{value}]', int(struct_data["l0_Status"][0][value]), ValueType.INT)
+            
+        PrintAndCheck(6, 1, f'cmdRejCount', int(struct_data["cmdRejCount"][0]), ValueType.INT)
+        PrintAndCheck(6, 1, f'cmdAccCount', int(struct_data["cmdAccCount"][0]), ValueType.INT)
             
         for value in range(0, len(struct_data["lastAcceptCmd"][0])):
             PrintAndCheck(6, 1, f'lastAcceptCmd[{value}]', int(struct_data["lastAcceptCmd"][0][value]), ValueType.INT)
@@ -966,26 +978,33 @@ def CheckHKFileHeader(file_hex_data):
                 'DS_FileHeader_t'
                 ]
     buf = []
-    header = np.frombuffer(file_hex_data, dtype=HKFILE_HEADER)
-    struct_data = np.frombuffer(header["CFE_FS_Header_t"], dtype=CFE_FS_Header_t)
-    #print(f'{print_bar_indent}   [CFE_FS_Header_t]')
-    #print(f'{print_indent} ContentType       : {struct_data["ContentType"]}')
-    content_type = int(struct_data["ContentType"])
-    content_type_buf = ((content_type & 0x000000FF) << (8 * 3))
-    content_type_buf |= ((content_type & 0x0000FF00) << (8 * 1))
-    content_type_buf |= ((content_type & 0x00FF0000) >> (8 * 1))
-    content_type_buf |= ((content_type & 0xFF000000) >> (8 * 3))
     
-    content_type_ref = int(0x63464531)
-    
-    if content_type_buf == content_type_ref:
-        print(f'{print_indent} content_type match!')
-        return True
-    else:
-        print(f'{print_indent} content_type unmatch! {content_type_buf} ≠ {content_type_ref}')
+    try:
+        header = np.frombuffer(file_hex_data, dtype=HKFILE_HEADER)
+        struct_data = np.frombuffer(header["CFE_FS_Header_t"], dtype=CFE_FS_Header_t)
+
+        #print(f'{print_bar_indent}   [CFE_FS_Header_t]')
+        #print(f'{print_indent} ContentType       : {struct_data["ContentType"]}')
+        content_type = int(struct_data["ContentType"])
+        content_type_buf = ((content_type & 0x000000FF) << (8 * 3))
+        content_type_buf |= ((content_type & 0x0000FF00) << (8 * 1))
+        content_type_buf |= ((content_type & 0x00FF0000) >> (8 * 1))
+        content_type_buf |= ((content_type & 0xFF000000) >> (8 * 3))
+        
+        content_type_ref = int(0x63464531)
+        
+        if content_type_buf == content_type_ref:
+            print(f'{print_indent} content_type match!')
+            return True
+        else:
+            print(f'{print_indent} content_type unmatch! {content_type_buf} ≠ {content_type_ref}')
+            return False
+        
+    except Exception as ex: 
+        print(f'exp : {ex}')
         return False
     
-def PrintFileData(file_type, file_hex_data, file_header_size, struct_size):
+def PrintFileData(file_type, file_hex_data, file_header_size, struct_size, print_label):
     
     start_index = file_header_size
     end_index = start_index + struct_size
@@ -1020,7 +1039,8 @@ def PrintFileData(file_type, file_hex_data, file_header_size, struct_size):
         
         start_index += struct_size
         end_index += struct_size
-        print(f'end [{i + 1} / {packet_line_count}]')
+        print(f'end  [{i + 1} / {packet_line_count}]')
+        print(f'file [{print_label}]')
         print(f'')
         a = input('\033[38;5;208m' + f'Show Next Packet (any key)? or Exit (q)?' + '\033[0m')
         if a == 'q':
@@ -1107,8 +1127,8 @@ def main():
                 
                 file_header_input_buf = file_hex[0:76]
                 file_header_input_buf_bytes = bytes(file_header_input_buf)
-        
                 is_has_header = CheckHKFileHeader(file_header_input_buf_bytes)
+
                 global file_header_size 
                 if is_has_header:
                     file_header_size = 140
@@ -1118,6 +1138,7 @@ def main():
                 expect_file_size = file_header_size
                 struct_size = 0
                 
+                print(f'{print_indent} ------- 3')
                 file_type = GetFileType(os.path.basename(file_full_path))
                 
                 struct_size = GetStructSize(file_type)
@@ -1135,7 +1156,7 @@ def main():
                 else:
                     print(f'{print_indent} file size OK')
                     print('')
-                    PrintFileData(file_type, file_hex, file_header_size, struct_size)
+                    PrintFileData(file_type, file_hex, file_header_size, struct_size, file_full_path)
                 
             else:
                 print(f'{print_indent} file not exist...')
@@ -1161,38 +1182,40 @@ if __name__ == "__main__":
     
     dummyDB["1.3.depStatus"] = 0x33
     dummyDB["1.3.depStatus_GPIO"] = 0x33
-    dummyDB["1.3.spare"] = 0x09
-    dummyDB["1.3.panelTemp_ST_0"] = -10101
-    dummyDB["1.3.panelTemp_ST_1"] = -10102
-    dummyDB["1.3.panelTemp_ST_2"] = -10103
-    dummyDB["1.3.panelTemp_ST_3"] = -10104
-    dummyDB["1.3.panelTemp_UTT_0"] = -10105
-    dummyDB["1.3.panelTemp_UTT_1"] = -10106
-    dummyDB["1.3.panelTemp_UTT_2"] = -10107
-    dummyDB["1.3.panelTemp_UBT_0"] = -10108
-    dummyDB["1.3.panelTemp_UBT_1"] = -10109
-    dummyDB["1.3.panelTemp_UBT_2"] = -10110
-    dummyDB["1.3.antennaTemp_0"] = -10111
-    dummyDB["1.3.antennaTemp_1"] = -10112
-    dummyDB["1.3.eocTemp_0"] = -10113
-    dummyDB["1.3.eocTemp_1"] = -10114
+    dummyDB["1.3.spare"] = 0x06
+    dummyDB["1.3.panelTemp_ST[0]"] = -10101
+    dummyDB["1.3.panelTemp_ST[1]"] = -10102
+    dummyDB["1.3.panelTemp_ST[2]"] = -10103
+    dummyDB["1.3.panelTemp_ST[3]"] = -10104
+    dummyDB["1.3.panelTemp_UTT[0]"] = -10105
+    dummyDB["1.3.panelTemp_UTT[1]"] = -10106
+    dummyDB["1.3.panelTemp_UTT[2]"] = -10107
+    dummyDB["1.3.panelTemp_UBT[0]"] = -10108
+    dummyDB["1.3.panelTemp_UBT[1]"] = -10109
+    dummyDB["1.3.panelTemp_UBT[2]"] = -10110
+    dummyDB["1.3.adcTemp[0]"] = -10111
+    dummyDB["1.3.adcTemp[1]"] = -10112
+    dummyDB["1.3.adcTemp[2]"] = -10113
+    dummyDB["1.3.adcTemp[3]"] = -10114
     
     dummyDB["1.4.dockDeviceStatus"] = 0x801
-    dummyDB["1.4.acuDeviceStatus"] = 0x3801
+    dummyDB["1.4.spare1"] = 0x6
+    dummyDB["1.4.acuDeviceStatus"] = 0x20E2
     dummyDB["1.4.heaterStatus"] = 0x3
-    dummyDB["1.4.spare1"] = 0x0
-    dummyDB["1.4.pduDeviceStatus"] = 0x81
+    dummyDB["1.4.pduDeviceStatus"] = 0x99
     
     dummyDB["1.4.powerSwitchStatus"] = 0x49
-    dummyDB["1.4.xbandSwitchStatus"] = 0x3
-    dummyDB["1.4.pdhsSwitchStatus"] = 0x0
-    dummyDB["1.4.polcubeSwitchStatus"] = 0x3
-    dummyDB["1.4.spare6"] = 0x5
+    dummyDB["1.4.spare2"] = 0x1
     
-    dummyDB["1.4.antXPHeaterSwitchStatus"] = 0x0
-    dummyDB["1.4.antXMHeaterSwitchStatus"] = 0x3
-    dummyDB["1.4.eocHeaterSwitchStatus"] = 0x0
-    dummyDB["1.4.spare7"] = 0x0
+    dummyDB["1.4.xbandSwitchStatus"] = 0x2
+    dummyDB["1.4.pdhsSwitchStatus"] = 0x1
+    dummyDB["1.4.polcubeSwitchStatus"] = 0x2
+    dummyDB["1.4.spare3"] = 0x1
+    
+    dummyDB["1.4.antXPHeaterSwitchStatus"] = 0x2
+    dummyDB["1.4.antXMHeaterSwitchStatus"] = 0x1
+    dummyDB["1.4.eocHeaterSwitchStatus"] = 0x2
+    dummyDB["1.4.spare4"] = 0x1
     
     dummyDB["1.4.SwitchCurrent[0]"] = -10001
     dummyDB["1.4.SwitchCurrent[1]"] = -10002
@@ -1251,11 +1274,13 @@ if __name__ == "__main__":
     dummyDB["1.4.dockBootcause"] = 55
     dummyDB["1.4.acuBootcause"] = 56
     dummyDB["1.4.pduBootcause"] = 57
+    dummyDB["1.4.bpx1Bootcause"] = 8
+    dummyDB["1.4.bpx2Bootcause"] = 9
     
     dummyDB["1.5.bootCause"] = 0x9
     dummyDB["1.5.spare"] = 0x9
     dummyDB["1.5.temperature_board"] = -3521
-    dummyDB["1.5.temperature_pa"] = 0
+    dummyDB["1.5.temperature_pa"] = -3793
     dummyDB["1.5.totalTxBytes"] = 0xff0120ff
     dummyDB["1.5.totalRxBytes"] = 0xff0230ff
     dummyDB["1.5.bootCount"] = 0xf45f
@@ -1264,34 +1289,32 @@ if __name__ == "__main__":
     
     dummyDB["2.1.l0_Status"] = 0x41
     dummyDB["2.1.momentumHealth"] = 0x11 
-    dummyDB["2.1.magSourceUsed"] = 0x9
+    dummyDB["2.1.magSourceUsed"] = 0x5
+    
     dummyDB["2.1.timeValid"] = 0x1
     dummyDB["2.1.refs_valid"] = 0x0
     dummyDB["2.1.attCtrlHealth"] = 0x3
     dummyDB["2.1.sttOperatingMode"] = 0x0
-    dummyDB["2.1.torqueRodeMode1"] = 0x9
-    dummyDB["2.1.torqueRodeMode2"] = 0x0
-    dummyDB["2.1.torqueRodeMode3"] = 0x9
-    dummyDB["2.1.torqueRodeFiringPack"] = 0x00
-    dummyDB["2.1.tableUploadStatus"] = 0x11
-    dummyDB["2.1.spare1"] = 0x0
-    dummyDB["2.1.sunPoint_state"] = 0x5
-    dummyDB["2.1.attDetHealth"] = 0x0
-    dummyDB["2.1.attCmdHealth"] = 0x11
-    dummyDB["2.1.attStatus"] = 0x00
-    dummyDB["2.1.runLowRateTask"] = 0x1
-    dummyDB["2.1.magHealth"] = 0x0
-    dummyDB["2.1.cssHealth"] = 0x3
-    dummyDB["2.1.imuHealth"] = 0x0
+    
+    dummyDB["2.1.torqueRodeFiringPack"] = 0x21
+    dummyDB["2.1.magHealth"] = 0x2
     dummyDB["2.1.gpsHealth"] = 0x21
-    dummyDB["2.1.spare2"] = 0x0
-    dummyDB["2.1.taiSeconds"] = 200001
-    dummyDB["2.1.positionWrt_ECI[0]"] = 200002.001
-    dummyDB["2.1.positionWrt_ECI[1]"] = 200003.002
-    dummyDB["2.1.positionWrt_ECI[2]"] = 200004.003
-    dummyDB["2.1.velocityWrt_ECI[0]"] = 200005.004
-    dummyDB["2.1.velocityWrt_ECI[1]"] = 200006.005
-    dummyDB["2.1.velocityWrt_ECI[2]"] = 200007.006
+    dummyDB["2.1.cssHealth"] = 0x3
+    dummyDB["2.1.attDetHealth"] = 0x2
+    dummyDB["2.1.attCmdHealth"] = 0x11
+    dummyDB["2.1.imuHealth"] = 0x0
+    dummyDB["2.1.runLowRateTask"] = 0x1
+    dummyDB["2.1.attStatus"] = 0x00
+    dummyDB["2.1.tableUploadStatus"] = 0x11
+    dummyDB["2.1.sunPoint_state"] = 0x5
+    
+    dummyDB["2.1.taiSeconds"] = 200001.001
+    dummyDB["2.1.positionWrt_ECI[0]"] = 200002.002
+    dummyDB["2.1.positionWrt_ECI[1]"] = 200003.003
+    dummyDB["2.1.positionWrt_ECI[2]"] = 200004.004
+    dummyDB["2.1.velocityWrt_ECI[0]"] = 200005.005
+    dummyDB["2.1.velocityWrt_ECI[1]"] = 200006.006
+    dummyDB["2.1.velocityWrt_ECI[2]"] = 200007.007
     dummyDB["2.1.qBodyWrt_ECI[0]"] = 200008
     dummyDB["2.1.qBodyWrt_ECI[1]"] = 200009
     dummyDB["2.1.qBodyWrt_ECI[2]"] = 200010
@@ -1299,13 +1322,16 @@ if __name__ == "__main__":
     dummyDB["2.1.filteredSpeed_RPM[0]"] = 20012
     dummyDB["2.1.filteredSpeed_RPM[1]"] = 20013
     dummyDB["2.1.filteredSpeed_RPM[2]"] = 20014
-    dummyDB["2.1.totalMomentumMag"] = 20015.007
+    dummyDB["2.1.torqDutyCycle[0]"] = 215
+    dummyDB["2.1.torqDutyCycle[1]"] = 216
+    dummyDB["2.1.torqDutyCycle[2]"] = 217
+    dummyDB["2.1.totalMomentumMag"] = 20018.007
     
     ##############################################################################
     
     dummyDB["3.1.sourceOfLastStartup"] = 0x201
-    dummyDB["3.1.stateOfUnit"] = 0x0
-    dummyDB["3.1.selfTestResult"] = 0x3
+    dummyDB["3.1.stateOfUnit"] = 0x01
+    dummyDB["3.1.selfTestResult"] = 0x03
     dummyDB["3.1.temperature"] = -31
     
     ##############################################################################
@@ -1317,34 +1343,41 @@ if __name__ == "__main__":
     
     ##############################################################################
     
-    dummyDB["5.1.cameraId"] = 0x1
-    dummyDB["5.1.binningStatus"] = 0x0
-    dummyDB["5.1.ldoStatus"] = 0x1
-    dummyDB["5.1.sensorSyncStatus"] = 0x0
-    dummyDB["5.1.reserved"] = 0x009
+    dummyDB["5.1.1.cameraId"] = 0x0
+    dummyDB["5.1.1.binningStatus"] = 0x0
+    dummyDB["5.1.1.ldoStatus"] = 0x1
+    dummyDB["5.1.1.sensorSyncStatus"] = 0x1
+    dummyDB["5.1.1.reserved"] = 0x009
     
-    dummyDB["5.2.currentTime"] = 50002
+    dummyDB["5.1.2.cameraId"] = 0x1
+    dummyDB["5.1.2.binningStatus"] = 0x0
+    dummyDB["5.1.2.ldoStatus"] = 0x0
+    dummyDB["5.1.2.sensorSyncStatus"] = 0x0
+    dummyDB["5.1.2.reserved"] = 0x009
+    
+    dummyDB["5.2.currentTime[0]"] = 50002
+    dummyDB["5.2.currentTime[1]"] = 50002
     dummyDB["5.2.ldoBoardTemp"] = 50003
     dummyDB["5.2.powerBoardTemp"] = 50004
     dummyDB["5.2.ScifBoardTemp"] = 50005
     dummyDB["5.2.FpgaTemp"] = 50006
-    dummyDB["5.2.SensorTemp"] = 50007
+    dummyDB["5.2.SensorTemp[0]"] = 50007
+    dummyDB["5.2.SensorTemp[1]"] = 50007
     
     ##############################################################################
     
-    dummyDB["6.1.l0_Status[0]"] = 200017
-    dummyDB["6.1.l0_Status[1]"] = 200018
-    dummyDB["6.1.l0_Status[2]"] = 200019
-    dummyDB["6.1.l0_Status[3]"] = 200020
-    dummyDB["6.1.l0_Status[4]"] = 200021
-    dummyDB["6.1.l0_Status[5]"] = 200022
-    dummyDB["6.1.l0_Status[6]"] = 200023
-    dummyDB["6.1.lastAcceptCmd[0]"] = 224
-    dummyDB["6.1.lastAcceptCmd[1]"] = 225
-    dummyDB["6.1.lastAcceptCmd[2]"] = 226
-    dummyDB["6.1.lastRejCmd[0]"] = 227
-    dummyDB["6.1.lastRejCmd[1]"] = 228
-    dummyDB["6.1.lastRejCmd[2]"] = 229
+    dummyDB["6.1.l0_Status[0]"] = 268374015
+    dummyDB["6.1.l0_Status[1]"] = 81331417
+    dummyDB["6.1.l0_Status[2]"] = 121964357
+    dummyDB["6.1.l0_Status[3]"] = 162662834
+    dummyDB["6.1.l0_Status[4]"] = 81331417
+    dummyDB["6.1.l0_Status[5]"] = 121964357
+    dummyDB["6.1.cmdRejCount"] = 224
+    dummyDB["6.1.cmdAccCount"] = 225
+    dummyDB["6.1.lastAcceptCmd[0]"] = 226
+    dummyDB["6.1.lastAcceptCmd[1]"] = 227
+    dummyDB["6.1.lastRejCmd[0]"] = 228
+    dummyDB["6.1.lastRejCmd[1]"] = 229
     dummyDB["6.1.inertia[0]"] = 200030
     dummyDB["6.1.inertia[1]"] = 200031
     dummyDB["6.1.inertia[2]"] = 200032
