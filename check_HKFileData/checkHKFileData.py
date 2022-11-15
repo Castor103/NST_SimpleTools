@@ -12,12 +12,18 @@ import argparse
 import numpy as np
 
 # Observer HK File Header Size !
-file_header_size = 0  # 140 = 0x8C
+file_header_size = 0    # 140 = 0x8C 
+                        # 헤더 존재하는지 check 하는 함수 있음. 굳이 숫자 변경 필요 x
 
 print_bar_indent = '------------------------------'
 print_cap_indent = '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
 print_indent = ' '
 print_only_unmatched = True
+save_file_path = ''
+save_file_handle = {}
+save_file_flag = False
+flag_ask_next_page = True
+    
 dummyDB = {}
 
 class ValueType(enum.Enum):
@@ -353,19 +359,19 @@ class HKFILE_H1_c:
         return self.case()
     
     def case_TestPack_t(self):
-        print(f'{print_bar_indent}   [TestPack_t]')
+        #print(f'{print_bar_indent}    [TestPack_t]')
         struct_data = np.frombuffer(self.buf, dtype=TestPack_t)
         temp = int(struct_data["soh"])
         print(f' soh    : {temp}')
         
     def case_TimeStamp_t(self):
-        print(f'{print_bar_indent}   [TimeStamp_t]')
+        #print(f'{print_bar_indent}    [TimeStamp_t]')
         struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
         temp = int(struct_data["timestamp"])
         PrintAndCheck(1, 0, f'timestamp', int(temp), ValueType.INT)
     
     def case_EPS_FSW_HKPack_t(self):
-        print(f'{print_bar_indent}   [EPS_FSW_HKPack_t]')
+        #print(f'{print_bar_indent}    [EPS_FSW_HKPack_t]')
         struct_data = np.frombuffer(self.buf, dtype=EPS_FSW_HKPack_t)
         
         temp = int(struct_data["soh"])
@@ -385,19 +391,19 @@ class HKFILE_H1_c:
         PrintAndCheck(1, 1, f'nandFlashCapacity', int(struct_data["nandFlashCapacity"]), ValueType.INT)
         PrintAndCheck(1, 1, f'sdCardCapacity', int(struct_data["sdCardCapacity"]), ValueType.INT)
         
-        print('')
+        #print('')
     
     def case_CDHS_HKPack_t(self):
-        print(f'{print_bar_indent}   [CDHS_HKPack_t]')
+        #print(f'{print_bar_indent}    [CDHS_HKPack_t]')
         struct_data = np.frombuffer(self.buf, dtype=CDHS_HKPack_t)
         
         PrintAndCheck(1, 2, f'temperature', int(struct_data["temperature"]), ValueType.INT)
         PrintAndCheck(1, 2, f'edacCount', int(struct_data["edacCount"]), ValueType.INT)
         
-        print('')
+        #print('')
         
     def case_EPS_SP_HKPack_t(self):
-        print(f'{print_bar_indent}   [EPS_SP_HKPack_t]')
+        #print(f'{print_bar_indent}    [EPS_SP_HKPack_t]')
         struct_data = np.frombuffer(self.buf, dtype=EPS_SP_HKPack_t)
         
         #print(f'-----------3 {struct_data["soh"]}')
@@ -432,10 +438,10 @@ class HKFILE_H1_c:
         for i in range(0, len(struct_data[label][0])):
             PrintAndCheck(1, 3, f'{label}[{i}]', int(struct_data[label][0][i]), ValueType.INT)
        
-        print('')
+        #print('')
         
     def case_EPS_P60_HKPack_t(self):
-        print(f'{print_bar_indent}   [EPS_P60_HKPack_t]')
+        #print(f'{print_bar_indent}    [EPS_P60_HKPack_t]')
         struct_data = np.frombuffer(self.buf, dtype=EPS_P60_HKPack_t)
         
         #print(f' ------ {struct_data["soh"][0]}')
@@ -521,10 +527,10 @@ class HKFILE_H1_c:
         PrintAndCheck(1, 4, f'bpx1Bootcause', int(bpx1Bootcause), ValueType.INT)
         PrintAndCheck(1, 4, f'bpx2Bootcause', int(bpx2Bootcause), ValueType.INT)
         
-        print('')
+        #print('')
         
     def case_CS_AX2150_HKPack_t(self):
-        print(f'{print_bar_indent}   [CS_AX2150_HKPack_t]')
+        #print(f'{print_bar_indent}    [CS_AX2150_HKPack_t]')
         struct_data = np.frombuffer(self.buf, dtype=CS_AX2150_HKPack_t)
     
         temp = int(struct_data["soh"])
@@ -559,13 +565,13 @@ class HKFILE_H2_c:
         return self.case()
     
     def case_TimeStamp_t(self):
-        print(f'{print_bar_indent}   [TimeStamp_t]')
+        #print(f'{print_bar_indent}    [TimeStamp_t]')
         struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
         temp = int(struct_data["timestamp"])
         PrintAndCheck(2, 0, f'timestamp', int(temp), ValueType.INT)
  
     def case_AC_HKPack_t(self):
-        print(f'{print_bar_indent}   [AC_HKPack_t]')
+        #print(f'{print_bar_indent}    [AC_HKPack_t]')
         struct_data = np.frombuffer(self.buf, dtype=AC_HKPack_t)
         
         l0_Status = int(struct_data["soh"][0][0]) & 0b01111111
@@ -637,7 +643,7 @@ class HKFILE_H2_c:
         #print(f' totalMomentumMag                   : %.3lf' % float(struct_data["totalMomentumMag"]))
         PrintAndCheck(2, 1, f'totalMomentumMag', float(struct_data["totalMomentumMag"]), ValueType.FLOAT)
         
-        print('')
+        #print('')
     
 class HKFILE_H3_c:
     family = [  
@@ -658,13 +664,13 @@ class HKFILE_H3_c:
         return self.case()
     
     def case_TimeStamp_t(self):
-        print(f'{print_bar_indent}   [TimeStamp_t]')
+        #print(f'{print_bar_indent}    [TimeStamp_t]')
         struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
         temp = int(struct_data["timestamp"])
         PrintAndCheck(3, 0, f'timestamp', int(temp), ValueType.INT)
  
     def case_CS_EWC27_HKPack_t(self):
-        print(f'{print_bar_indent}   [CS_EWC27_HKPack_t]')
+        #print(f'{print_bar_indent}    [CS_EWC27_HKPack_t]')
         struct_data = np.frombuffer(self.buf, dtype=CS_EWC27_HKPack_t)
         
         sourceOfLastStartup =  (int(struct_data["soh"][0][0]) & 0xFF) | ((int(struct_data["soh"][0][1]) & 0x02) << 8)
@@ -677,7 +683,7 @@ class HKFILE_H3_c:
         
         PrintAndCheck(3, 1, f'temperature', int(struct_data["temperature"]), ValueType.INT)
 
-        print('')
+        #print('')
 
 class HKFILE_H4_c:
     family = [  
@@ -698,13 +704,13 @@ class HKFILE_H4_c:
         return self.case()
     
     def case_TimeStamp_t(self):
-        print(f'{print_bar_indent}   [TimeStamp_t]')
+        #print(f'{print_bar_indent}    [TimeStamp_t]')
         struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
         temp = int(struct_data["timestamp"])
         PrintAndCheck(4, 0, f'timestamp', int(temp), ValueType.INT)
  
     def case_PC_PDHS_HKPack_t(self):
-        print(f'{print_bar_indent}   [PC_PDHS_HKPack_t]')
+        #print(f'{print_bar_indent}    [PC_PDHS_HKPack_t]')
         struct_data = np.frombuffer(self.buf, dtype=PC_PDHS_HKPack_t)
        
         PrintAndCheck(4, 1, f'errorStatus', int(struct_data["errorStatus"]), ValueType.INT)
@@ -712,7 +718,7 @@ class HKFILE_H4_c:
         PrintAndCheck(4, 1, f'receivedCommandCount', int(struct_data["receivedCommandCount"]), ValueType.INT)
         PrintAndCheck(4, 1, f'receivedCommandErrorCount', int(struct_data["receivedCommandErrorCount"]), ValueType.INT)
 
-        print('')            
+        #print('')            
         
 class HKFILE_H5_c:
     family = [
@@ -734,13 +740,13 @@ class HKFILE_H5_c:
         return self.case()
  
     def case_TimeStamp_t(self):
-        print(f'{print_bar_indent}   [TimeStamp_t]')
+        #print(f'{print_bar_indent}    [TimeStamp_t]')
         struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
         temp = int(struct_data["timestamp"])
         PrintAndCheck(5, 0, f'timestamp', int(temp), ValueType.INT)
         
     def case_PC_PolCube_SOH_t(self):
-        print(f'{print_bar_indent}   [PC_PolCube_SOH_t]')
+        #print(f'{print_bar_indent}    [PC_PolCube_SOH_t]')
         struct_data = np.frombuffer(self.buf, dtype=PC_PolCube_SOH_t)
        
         cameraId =  (int(struct_data["boardstatus"][0][0]) & 0x01)
@@ -767,10 +773,10 @@ class HKFILE_H5_c:
         PrintAndCheck(5, 1, f'2.sensorSyncStatus', sensorSyncStatus, ValueType.HEX, 1)
         PrintAndCheck(5, 1, f'2.reserved', reserved, ValueType.HEX, 3)
 
-        print('')            
+        #print('')            
     
     def case_PC_PolCube_HK_t(self):
-        print(f'{print_bar_indent}   [PC_PolCube_HK_t]')
+        #print(f'{print_bar_indent}    [PC_PolCube_HK_t]')
         struct_data = np.frombuffer(self.buf, dtype=PC_PolCube_HK_t)
        
         for value in range(0, len(struct_data["currentTime"][0])):
@@ -784,7 +790,7 @@ class HKFILE_H5_c:
         for value in range(0, len(struct_data["SensorTemp"][0])):
             PrintAndCheck(5, 2, f'SensorTemp[{value}]',int(struct_data["SensorTemp"][0][value]), ValueType.INT)
 
-        print('')             
+        #print('')             
         
 class HKFILE_H6_c:
     family = [  
@@ -805,13 +811,13 @@ class HKFILE_H6_c:
         return self.case()
     
     def case_TimeStamp_t(self):
-        print(f'{print_bar_indent}   [TimeStamp_t]')
+        #print(f'{print_bar_indent}    [TimeStamp_t]')
         struct_data = np.frombuffer(self.buf, dtype=TimeStamp_t)
         temp = int(struct_data["timestamp"])
         PrintAndCheck(6, 0, f'timestamp', int(temp), ValueType.INT)
  
     def case_AC_HKExtraPack_t(self):
-        print(f'{print_bar_indent}   [AC_HKExtraPack_t]')
+        #print(f'{print_bar_indent}    [AC_HKExtraPack_t]')
         struct_data = np.frombuffer(self.buf, dtype=AC_HKExtraPack_t)
         
         for value in range(0, len(struct_data["l0_Status"][0])):
@@ -993,7 +999,51 @@ def CheckDummyFloat(file_type, struct_type, label, value):
         
     return rtn
 
-def PrintAndCheck(file_type, struct_type, label_str, value, value_type, bit_disp_num = 0):
+def PrintAndCheckR(file_type, struct_type, label_str, value, value_type, bit_disp_num):
+    if print_only_unmatched:
+        if value_type == ValueType.HEX:
+            chk_str = CheckDummyData(file_type, struct_type, label_str, (value.__str__()))
+            if chk_str != '':
+                val_str = "0x{0:0{1}x}".format(value, bit_disp_num)
+                print(' %s, %s' % (label_str, val_str))
+                WriteSaveFile(f'{val_str},')
+        elif value_type == ValueType.FLOAT:
+            #value_float = (floor(value*1000)/1000)
+            value_float = round(value, 3)
+            chk_str = CheckDummyFloat(file_type, struct_type, label_str, value_float)
+            if chk_str != '':
+                val_str = format(float(value_float), '.3f')
+                print(' %s, %s ' % (label_str, val_str))
+                WriteSaveFile(f'{val_str},')
+        else:
+            #value_type == ValueType.INT:
+            chk_str = CheckDummyData(file_type, struct_type, label_str, (value.__str__()))
+            if chk_str != '':
+                val_str = int(value)
+                print(' %s, %s ' % (label_str, int(value)))
+                WriteSaveFile(f'{val_str},')
+        
+    else:
+        if value_type == ValueType.HEX:
+            chk_str = CheckDummyData(file_type, struct_type, label_str, (value.__str__()))
+            val_str = "0x{0:0{1}x}".format(value, bit_disp_num)
+            print(' %s, %s ' % (label_str, val_str))
+            WriteSaveFile(f'{val_str},')
+        elif value_type == ValueType.FLOAT:
+            #value_float = (floor(value*1000)/1000)
+            value_float = round(value, 3)
+            chk_str = CheckDummyFloat(file_type, struct_type, label_str, value_float)
+            val_str = format(float(value_float), '.3f')
+            print(' %s, %s ' % (label_str, val_str))
+            WriteSaveFile(f'{val_str},')
+        else:
+            #value_type == ValueType.INT:
+            chk_str = CheckDummyData(file_type, struct_type, label_str, (value.__str__()))
+            val_str = int(value)
+            print(' %s, %s ' % (label_str, val_str))
+            WriteSaveFile(f'{val_str},')
+
+def PrintAndCheckP(file_type, struct_type, label_str, value, value_type, bit_disp_num):
     if print_only_unmatched:
         if value_type == ValueType.HEX:
             chk_str = CheckDummyData(file_type, struct_type, label_str, (value.__str__()))
@@ -1024,6 +1074,11 @@ def PrintAndCheck(file_type, struct_type, label_str, value, value_type, bit_disp
             #value_type == ValueType.INT:
             chk_str = CheckDummyData(file_type, struct_type, label_str, (value.__str__()))
             print(' %-35s : %-15s %s ' % (label_str, int(value), chk_str))
+            
+def PrintAndCheck(file_type, struct_type, label_str, value, value_type, bit_disp_num = 0):
+    #PrintAndCheckP(file_type, struct_type, label_str, value, value_type, bit_disp_num)
+    PrintAndCheckR(file_type, struct_type, label_str, value, value_type, bit_disp_num)
+    
 
 def ReadFile(filepath):
     hex_list = []
@@ -1032,6 +1087,45 @@ def ReadFile(filepath):
         
     return hex_list
 
+
+def OpenSaveFile():
+    global save_file_path
+    global save_file_handle
+    global save_file_flag
+    
+    try:
+        if not save_file_flag:
+            save_file_handle = open(f'{save_file_path}.txt', 'w')
+            save_file_flag = True
+            
+    except Exception as ex: 
+        print(f'exp : {ex}')
+        
+def WriteSaveFile(write_str):
+    global save_file_handle
+    global save_file_flag
+        
+    try:
+        if save_file_flag:
+            save_file_handle.write(write_str)
+            
+    except Exception as ex: 
+        print(f'exp : {ex}')
+        
+def CloseSaveFile():
+    global save_file_handle
+    global save_file_flag
+    
+    try:
+        if save_file_flag:
+            save_file_handle.close()
+            save_file_flag = False
+        else:
+            print(f'CloseSaveFile, Not Opened')
+            
+    except Exception as ex: 
+        print(f'exp : {ex}')
+        
 def CheckHKFileHeader(file_hex_data):
     family = [ 'CFE_FS_Header_t', 
                 'DS_FileHeader_t'
@@ -1042,7 +1136,7 @@ def CheckHKFileHeader(file_hex_data):
         header = np.frombuffer(file_hex_data, dtype=HKFILE_HEADER)
         struct_data = np.frombuffer(header["CFE_FS_Header_t"], dtype=CFE_FS_Header_t)
 
-        #print(f'{print_bar_indent}   [CFE_FS_Header_t]')
+        ##print(f'{print_bar_indent}    [CFE_FS_Header_t]')
         #print(f'{print_indent} ContentType       : {struct_data["ContentType"]}')
         content_type = int(struct_data["ContentType"])
         content_type_buf = ((content_type & 0x000000FF) << (8 * 3))
@@ -1064,6 +1158,7 @@ def CheckHKFileHeader(file_hex_data):
         return False
     
 def PrintFileData(file_type, file_hex_data, file_header_size, struct_size, print_label):
+    global flag_ask_next_page
     
     start_index = file_header_size
     end_index = start_index + struct_size
@@ -1072,8 +1167,10 @@ def PrintFileData(file_type, file_hex_data, file_header_size, struct_size, print
     packet_line_count = floor(packet_line_count)
     print(f'{print_indent} packet_line_count : {packet_line_count}')
     print(f'{print_indent} struct_size       : {struct_size}')
-    print('')
-    a = input('\033[38;5;208m' + f'Start Packet Show! (press any key)' + '\033[0m')
+    #print('')
+    
+    if flag_ask_next_page:
+        a = input('\033[38;5;208m' + f'Start Packet Show! (press any key)' + '\033[0m')
     
     for i in range(0, packet_line_count):
         file_input_buf = file_hex_data[start_index:end_index]
@@ -1098,26 +1195,33 @@ def PrintFileData(file_type, file_hex_data, file_header_size, struct_size, print
         
         start_index += struct_size
         end_index += struct_size
+        WriteSaveFile(f'\n')
         print(f'end  [{i + 1} / {packet_line_count}]')
         print(f'file [{print_label}]')
         print(f'')
-        a = input('\033[38;5;208m' + f'Show Next Packet (any key)? or Exit (q)?' + '\033[0m')
-        if a == 'q':
-            break
+        
+        if flag_ask_next_page:
+            a = input('\033[38;5;208m' + f'Show Next Packet (any key)? or Exit (q)?' + '\033[0m')
+            if a == 'q':
+                break
         print(f'')
     
-    print(f'{print_bar_indent} ')
+    #print(f'{print_bar_indent}  ')
 
 def main():
     try:
         global print_only_unmatched
+        global save_file_path
+        global flag_ask_next_page
+        use_filesave = False
         
         parser = argparse.ArgumentParser(description='Observer HK File Data Extract Application CLI Mode Argument Help...')
-        #parser.add_argument('-f', '--filepath', help='input file path', required=True)
-        parser.add_argument('-d', '--dirpath', help='input directory path', required=True)
+        parser.add_argument('-f', '--filepath', help='input file path')
+        parser.add_argument('-d', '--dirpath', help='input directory path')
         parser.add_argument('-o', '--only_unmatched', help='print line only unmatched case', action='store_true')
+        parser.add_argument('-s', '--skip_ask_next_page', help='no ask to go on next page', action='store_true')
         args = parser.parse_args()
-        print('')
+        #print('')
         
         if args.only_unmatched:
             print_only_unmatched = True
@@ -1126,10 +1230,13 @@ def main():
             print_only_unmatched = False
             print(f'{print_indent} print all line = {print_only_unmatched}')
             
+        if args.skip_ask_next_page:
+            flag_ask_next_page = False
+            
         file_full_path_ok = False
         
         ## 디렉토리 경로에서 파일명 선택
-        if args.dirpath:
+        if (args.dirpath is not None) and (len(args.dirpath) > 0):
             if os.path.exists(args.dirpath):
                 print(f'{print_indent} directory exist')
                 
@@ -1145,7 +1252,7 @@ def main():
                     file_index += 1
                 
                 print(f' ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾')
-                print('')
+                #print('')
                 select_num = -1
                 for i in range(0, 3):
                     a = input('\033[38;5;208m' + f'Input File Index...' + '\033[0m')
@@ -1168,15 +1275,41 @@ def main():
                 print(f'{print_indent} directory not exist')
         else:
             print(f'{print_indent} directory path argument is empty!')
-        
+
+        if (args.filepath is not None) and (len(args.filepath) > 0):
+            file_full_path = args.filepath
+            file_full_path_ok = True
+            
+        if file_full_path_ok:
+            if (args.dirpath is not None):
+                save_file_path = f'{args.dirpath}/{file_list[select_num - 1]}_cv2str'
+            else:
+                save_file_path = f'{file_full_path}_cv2str'
+            
+            if flag_ask_next_page:
+                a = input('\033[38;5;208m' + f'Write cv2str file? (y or n)' + '\033[0m')
+                if a == 'y':
+                    print(f'{print_indent} OpenSaveFile Yes')
+                    use_filesave = True
+                else:
+                    print(f'{print_indent} OpenSaveFile Nope')
+                    
+            else:
+                print(f'{print_indent} OpenSaveFile Yes')
+                use_filesave = True
+            
         ## 파일명 바탕으로 추출
         if file_full_path_ok:
-            print('')
+            #print('')
             print(f'{print_indent} input filepath : {file_full_path}')
             rtn = os.path.isfile(file_full_path)
             
             if rtn:
                 print(f'{print_indent} file exist check')
+                
+                if use_filesave:
+                    OpenSaveFile()
+                
                 file_hex = ReadFile(file_full_path)
                 file_hex_size = len(file_hex)
                 print(f'{print_indent} file length : {file_hex_size}')
@@ -1213,8 +1346,11 @@ def main():
                     print(f'{print_indent} file size is less than size expected {file_hex_size} < {expect_file_size}')
                 else:
                     print(f'{print_indent} file size OK')
-                    print('')
+                    #print('')
                     PrintFileData(file_type, file_hex, file_header_size, struct_size, file_full_path)
+                    
+                    if use_filesave:
+                        CloseSaveFile()
                 
             else:
                 print(f'{print_indent} file not exist...')

@@ -22,9 +22,13 @@
 
 [ Useage ]
 
+    $ python3 checkHKFileData.py -d {파일이존재하는 디렉토리상대경로}   # 모든 데이터 출력
+
     $ python3 checkHKFileData.py -f {파일상대경로}        # 모든 데이터 출력
 
     $ python3 checkHKFileData.py -f {파일상대경로} -o     # 더미 데이터와 일치하지 않는 경우만 콘솔 출력
+
+    $ python3 checkHKFileData.py -f {파일상대경로} -s     # '{해당 파일명}_cv2str.txt' 파일에 hkdata를 스트링형태로 csv 포멧에 따라 저장
 
 [ ScreenShot ]
 
